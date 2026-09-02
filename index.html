@@ -3,28 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controllo Shelly Remote</title>
+    <title>Controllo Shelly Multi-Casa</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #0f172a; color: #ffffff; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { max-width: 450px; width: 100%; }
+        .container { max-width: 480px; width: 100%; }
         h1 { text-align: center; color: #f8fafc; font-size: 22px; margin-bottom: 20px; }
         h2 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 0; }
+        .house-title { font-size: 18px; color: #f59e0b; margin: 20px 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
         .card { background-color: #1e293b; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); }
         label { display: block; font-size: 12px; margin-bottom: 4px; color: #94a3b8; text-transform: uppercase; }
-        input { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
-        input:focus { outline: none; border-color: #38bdf8; }
+        input, select { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
+        input:focus, select:focus { outline: none; border-color: #38bdf8; }
         .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.2s ease; }
         .btn-add { background-color: #10b981; color: white; margin-top: 5px; }
         .device-item { background-color: #0f172a; padding: 16px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; }
         .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .device-title { font-weight: bold; font-size: 16px; color: #f1f5f9; }
-        .btn-trigger { background-color: #2563eb; color: white; padding: 16px; font-size: 18px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        .btn-trigger { background-color: #2563eb; color: white; padding: 14px; font-size: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
         .btn-trigger:active { transform: scale(0.96); background-color: #1d4ed8; }
         .btn-trigger:disabled { background-color: #64748b; cursor: not-allowed; box-shadow: none; }
-        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; }
-        .btn-share { background-color: #8b5cf6; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; }
-        .status-msg { font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; color: #94a3b8; }
+        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; }
+        .btn-house-share { background-color: #8b5cf6; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; }
+        .status-msg { font-size: 13px; text-align: center; margin-top: 8px; min-height: 18px; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -32,24 +33,26 @@
     <div class="container">
         <h1 id="pageTitle">Controllo Shelly Remote</h1>
 
-        <!-- VISTA PER L'OSPITE (SI ATTIVA SOLO SE NELL'URL CI SONO I PARAMETRI) -->
+        <!-- VISTA OSPITE (MODALITÀ CASA COMPLETA O SINGOLO BOTTONE) -->
         <div id="guestView" class="card" style="display: none;">
-            <h2 id="guestDeviceName">Dispositivo Ospite</h2>
-            <button class="btn btn-trigger" id="guestBtn" onclick="attivaOspite()">APRI</button>
-            <div class="status-msg" id="guestStatus">Premi per aprire</div>
+            <h2 id="guestHouseName">I tuoi Comandi</h2>
+            <div id="guestDevicesList"></div>
         </div>
 
-        <!-- VISTA AMMINISTRATORE (PANNELLO COMPLETO) -->
+        <!-- VISTA AMMINISTRATORE -->
         <div id="adminView">
             <div class="card">
-                <h2>I Tuoi Dispositivi</h2>
-                <div id="devicesList"></div>
+                <h2>Le Tue Case e Dispositivi</h2>
+                <div id="housesContainer"></div>
             </div>
 
             <div class="card">
                 <h2>Aggiungi Nuovo Dispositivo</h2>
-                <label>Nome Dispositivo</label>
-                <input type="text" id="devName" placeholder="es. Cancello Casa">
+                <label>Nome Casa / Gruppo</label>
+                <input type="text" id="devHouse" placeholder="es. Casa Mare, Appartamento 1">
+
+                <label>Nome Pulsante / Comando</label>
+                <input type="text" id="devName" placeholder="es. Cancello Pedonale, Garage">
 
                 <label>Server URL</label>
                 <input type="text" id="devUrl" placeholder="https://shelly-278-eu.shelly.cloud">
@@ -66,60 +69,48 @@
     </div>
 
     <script>
-        let guestData = null;
-
         document.addEventListener("DOMContentLoaded", function() {
-            // Controlla se l'URL contiene parametri per la modalità "Ospite"
             const urlParams = new URLSearchParams(window.location.search);
-            const name = urlParams.get('name');
-            const url  = urlParams.get('url');
-            const key  = urlParams.get('key');
-            const id   = urlParams.get('id');
+            const houseDataParam = urlParams.get('houseData');
 
-            if (name && url && key && id) {
-                // MODALITÀ OSPITE ACTIVATED
-                guestData = { name, url, key, id };
-                document.getElementById('adminView').style.display = 'none';
-                document.getElementById('guestView').style.display = 'block';
-                document.getElementById('guestDeviceName').innerText = name;
-                document.getElementById('pageTitle').innerText = name;
-            } else {
-                // MODALITÀ AMMINISTRATORE
-                const initialDevice = {
-                    name: "Dispositivo Principale",
-                    url: "https://shelly-278-eu.shelly.cloud",
-                    key: "MjhmYzlhdWlkD629E35BB1288E526F6E5EA6AB0D7626360B4856675F8E98F43BE86A87BEC127B912184F320B1224",
-                    id: "1c6920095acc"
-                };
+            if (houseDataParam) {
+                // MODALITÀ OSPITE: Riceve i dati compressi della casa
+                try {
+                    const houseObj = JSON.parse(decodeURIComponent(houseDataParam));
+                    document.getElementById('adminView').style.display = 'none';
+                    document.getElementById('guestView').style.display = 'block';
+                    document.getElementById('pageTitle').innerText = houseObj.house;
+                    document.getElementById('guestHouseName').innerText = "Comandi disponibili:";
 
-                if (localStorage.getItem('shelly_devices') === null) {
-                    localStorage.setItem('shelly_devices', JSON.stringify([initialDevice]));
+                    const container = document.getElementById('guestDevicesList');
+                    houseObj.devices.forEach((dev, idx) => {
+                        const item = document.createElement('div');
+                        item.className = 'device-item';
+                        item.innerHTML = `
+                            <div class="device-header">
+                                <span class="device-title">${dev.name}</span>
+                            </div>
+                            <button class="btn btn-trigger" id="gbtn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'gbtn-${idx}', 'gstatus-${idx}')">ATTIVA</button>
+                            <div class="status-msg" id="gstatus-${idx}">Premia per attivare</div>
+                        `;
+                        container.appendChild(item);
+                    });
+                } catch (e) {
+                    alert("Link ospite non valido o corrotto.");
                 }
-                caricaDispositivi();
+            } else {
+                // MODALITÀ ADMIN
+                caricaDispositiviAdmin();
             }
         });
 
-        // FUNZIONE DEDICATA ALL'OSPITE
-        function attivaOspite() {
-            if (!guestData) return;
-            inviaComando(guestData.url, guestData.id, guestData.key, 'guestBtn', 'guestStatus');
-        }
-
-        // FUNZIONE AMMINISTRATORE
-        function attivaDispositivo(index) {
-            const dispositivi = JSON.parse(localStorage.getItem('shelly_devices'));
-            const dev = dispositivi[index];
-            inviaComando(dev.url, dev.id, dev.key, `btn-${index}`, `status-${index}`);
-        }
-
-        // INVIO CHIAMATA HTTP
         function inviaComando(serverUrl, deviceId, authKey, btnId, statusId) {
             const btn = document.getElementById(btnId);
             const statusDiv = document.getElementById(statusId);
 
             btn.disabled = true;
             statusDiv.style.color = "#38bdf8";
-            statusDiv.innerText = "Invio comando in corso...";
+            statusDiv.innerText = "Invio comando...";
 
             const cleanUrl = serverUrl.replace(/\/$/, "");
             const endpoint = `${cleanUrl}/device/relay/control`;
@@ -135,81 +126,108 @@
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: formData
             })
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
                 if (data.isok) {
                     statusDiv.style.color = "#4ade80";
-                    statusDiv.innerText = "✔ Comando inviato con successo!";
+                    statusDiv.innerText = "✔ Attivato con successo!";
                 } else {
                     statusDiv.style.color = "#f87171";
                     statusDiv.innerText = "✖ Errore: " + JSON.stringify(data.errors);
                 }
             })
-            .catch(error => {
+            .catch(() => {
                 statusDiv.style.color = "#f87171";
-                statusDiv.innerText = "✖ Errore di rete/connessione";
+                statusDiv.innerText = "✖ Errore di connessione";
             })
             .finally(() => {
                 setTimeout(() => { btn.disabled = false; }, 3000);
             });
         }
 
-        function caricaDispositivi() {
-            const container = document.getElementById('devicesList');
+        function caricaDispositiviAdmin() {
+            const container = document.getElementById('housesContainer');
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
 
             if (dispositivi.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #64748b;">Nessun dispositivo salvato.</p>';
+                container.innerHTML = '<p style="text-align: center; color: #64748b;">Nessun dispositivo presente.</p>';
                 return;
             }
 
+            // Raggruppa i dispositivi per Nome Casa
+            const caseGroup = {};
+            dispositivi.forEach((dev, originalIndex) => {
+                const houseName = dev.house || "Principale";
+                if (!caseGroup[houseName]) caseGroup[houseName] = [];
+                caseGroup[houseName].push({ ...dev, originalIndex });
+            });
+
             container.innerHTML = '';
 
-            dispositivi.forEach((dev, index) => {
-                const item = document.createElement('div');
-                item.className = 'device-item';
-                item.innerHTML = `
-                    <div class="device-header">
-                        <span class="device-title">${dev.name}</span>
-                        <div>
-                            <button class="btn-share" onclick="copiaLinkOspite(${index})">Copia Link Ospite</button>
-                            <button class="btn-delete" onclick="eliminaDispositivo(${index})">Elimina</button>
-                        </div>
+            for (const houseName in caseGroup) {
+                const houseDiv = document.createElement('div');
+                houseDiv.innerHTML = `
+                    <div class="house-title">
+                        <span>🏠 ${houseName}</span>
+                        <button class="btn-house-share" onclick="copiaLinkCasa('${houseName}')">🔗 Copia Link Casa</button>
                     </div>
-                    <button class="btn btn-trigger" id="btn-${index}" onclick="attivaDispositivo(${index})">APRI</button>
-                    <div class="status-msg" id="status-${index}">Premi per aprire</div>
                 `;
-                container.appendChild(item);
-            });
+
+                caseGroup[houseName].forEach((dev) => {
+                    const idx = dev.originalIndex;
+                    const item = document.createElement('div');
+                    item.className = 'device-item';
+                    item.innerHTML = `
+                        <div class="device-header">
+                            <span class="device-title">${dev.name}</span>
+                            <button class="btn-delete" onclick="eliminaDispositivo(${idx})">Elimina</button>
+                        </div>
+                        <button class="btn btn-trigger" id="btn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'btn-${idx}', 'status-${idx}')">ATTIVA RELÈ</button>
+                        <div class="status-msg" id="status-${idx}">Premia per attivare</div>
+                    `;
+                    houseDiv.appendChild(item);
+                });
+
+                container.appendChild(houseDiv);
+            }
         }
 
-        function copiaLinkOspite(index) {
-            const dispositivi = JSON.parse(localStorage.getItem('shelly_devices'));
-            const dev = dispositivi[index];
-            
+        function copiaLinkCasa(houseName) {
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+            const houseDevices = dispositivi
+                .filter(d => (d.house || "Principale") === houseName)
+                .map(d => ({ name: d.name, url: d.url, key: d.key, id: d.id }));
+
+            const payload = {
+                house: houseName,
+                devices: houseDevices
+            };
+
             const baseUrl = window.location.href.split('?')[0];
-            const linkOspite = `${baseUrl}?name=${encodeURIComponent(dev.name)}&url=${encodeURIComponent(dev.url)}&key=${encodeURIComponent(dev.key)}&id=${encodeURIComponent(dev.id)}`;
-            
-            navigator.clipboard.writeText(linkOspite).then(() => {
-                alert("✔ Link per l'ospite copiato negli appunti!\n\nInvialo via WhatsApp/Email al tuo host.");
-            }).catch(err => {
-                prompt("Copia manualmente questo link per l'ospite:", linkOspite);
+            const encodedData = encodeURIComponent(JSON.stringify(payload));
+            const fullUrl = `${baseUrl}?houseData=${encodedData}`;
+
+            navigator.clipboard.writeText(fullUrl).then(() => {
+                alert(`✔ Link per "${houseName}" copiato negli appunti!\n\nL'ospite vedrà tutti i tasti di questa casa.`);
+            }).catch(() => {
+                prompt("Copia manualmente il link:", fullUrl);
             });
         }
 
         function salvaDispositivo() {
-            const name = document.getElementById('devName').value.trim();
-            const url  = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
-            const key  = document.getElementById('devKey').value.trim();
-            const id   = document.getElementById('devId').value.trim();
+            const house = document.getElementById('devHouse').value.trim() || "Principale";
+            const name  = document.getElementById('devName').value.trim();
+            const url   = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
+            const key   = document.getElementById('devKey').value.trim();
+            const id    = document.getElementById('devId').value.trim();
 
             if (!name || !url || !key || !id) {
-                alert("Compila tutti i campi!");
+                alert("Compila tutti i campi obbligatori!");
                 return;
             }
 
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            dispositivi.push({ name, url, key, id });
+            dispositivi.push({ house, name, url, key, id });
 
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
 
@@ -218,14 +236,14 @@
             document.getElementById('devKey').value = '';
             document.getElementById('devId').value = '';
 
-            caricaDispositivi();
+            caricaDispositiviAdmin();
         }
 
         function eliminaDispositivo(index) {
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
             dispositivi.splice(index, 1);
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
-            caricaDispositivi();
+            caricaDispositiviAdmin();
         }
     </script>
 </body>
