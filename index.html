@@ -505,7 +505,7 @@
                         ${addressHtml}
                         <div class="house-actions-row">
                             <button class="btn-house-action btn-house-share" onclick="copiaLinkCasa('${houseId}')">🔗 Copia Link</button>
-                            <button class="btn-house-action btn-house-rename" onclick="rinominaAppartamento('${houseId}', '${houseName.replace(/'/g, "\\'")}')">✏️ Rinomina</button>
+                            <button class="btn-house-action btn-house-rename" onclick="modificaInteraCasa('${houseId}', '${houseName.replace(/'/g, "\\'")}', '${houseAddress.replace(/'/g, "\\'")}')">✏️ Modifica Casa</button>
                             <button class="btn-house-action btn-house-delete" onclick="eliminaInteroAppartamento('${houseId}', '${houseName.replace(/'/g, "\\'")}')">🗑️ Elimina</button>
                         </div>
                         <div id="dev-list-${houseId}"></div>
@@ -572,16 +572,22 @@
             });
         }
 
-        function rinominaAppartamento(houseId, vecchioNome) {
-            const nuovoNome = prompt(`Inserisci il nuovo nome per l'appartamento "${vecchioNome}":`, vecchioNome);
-            if (!nuovoNome || nuovoNome.trim() === "" || nuovoNome.trim() === vecchioNome) return;
+        function modificaInteraCasa(houseId, vecchioNome, vecchioIndirizzo) {
+            const nuovoNome = prompt(`Modifica nome dell'appartamento:`, vecchioNome);
+            if (nuovoNome === null) return;
+
+            const nuovoIndirizzo = prompt(`Modifica indirizzo dell'appartamento:`, vecchioIndirizzo);
+            if (nuovoIndirizzo === null) return;
+
+            const nomePulito = nuovoNome.trim() || vecchioNome;
+            const indirizzoPulito = nuovoIndirizzo.trim();
 
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            const nomePulito = nuovoNome.trim();
 
             dispositivi.forEach(dev => {
                 if (dev.houseId === houseId || dev.house === vecchioNome) {
                     dev.house = nomePulito;
+                    dev.address = indirizzoPulito;
                 }
             });
 
