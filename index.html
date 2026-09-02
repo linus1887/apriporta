@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attiva Shelly da Remoto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #0f172a;
+            color: #ffffff;
+        }
+        .btn {
+            padding: 20px 40px;
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            background-color: #2563eb;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s ease;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="btn" onclick="attivaRelay()">Attiva Dispositivo</button>
+    <div id="status"></div>
+
+    <script>
+        function attivaRelay() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = "Invio comando in corso...";
+
+            // MODIFICA QUESTI DATI CON I TUOI
+            const serverUrl = "https://shelly-XX-eu.shelly.cloud"; // Es. https://shelly-42-eu.shelly.cloud
+            const authKey = "IL_TUO_AUTH_KEY_HERE";
+            const deviceId = "IL_TUO_DEVICE_ID_HERE";
+
+            const endpoint = `${serverUrl}/device/relay/control`;
+
+            const formData = new URLSearchParams();
+            formData.append('id', deviceId);
+            formData.append('auth_key', authKey);
+            formData.append('channel', '0'); // Canale del relè (solitamente 0)
+            formData.append('turn', 'on');  // 'on', 'off' o 'toggle'
+
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.isok) {
+                    statusDiv.innerText = "Comando inviato con successo!";
+                } else {
+                    statusDiv.innerText = "Errore: " + JSON.stringify(data.errors);
+                }
+            })
+            .catch(error => {
+                statusDiv.innerText = "Errore di connessione: " + error;
+            });
+        }
+    </script>
+
+</body>
+</html>
