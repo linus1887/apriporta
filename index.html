@@ -339,12 +339,17 @@
             const tr = btn.closest('tr');
             const guestName = tr.querySelector('.pin-guest').value.trim();
             const pinVal = tr.querySelector('.pin-val').value.trim();
+            const startDate = tr.querySelector('.pin-start').value;
+            const endDate = tr.querySelector('.pin-end').value;
 
-            let messaggio = "Sei sicuro di voler eliminare questo codice PIN?";
-            if (guestName || pinVal) {
-                messaggio = `Sei sicuro di voler eliminare il PIN${guestName ? ' di "' + guestName + '"' : ''}${pinVal ? ' (' + pinVal + ')' : ''}?`;
+            // Se tutti i campi (Nome, PIN, Dal e Al) sono vuoti, rimuovi direttamente senza chiedere conferma
+            if (!guestName && !pinVal && !startDate && !endDate) {
+                tr.remove();
+                return;
             }
 
+            // Altrimenti chiedi conferma mostrandone i dettagli
+            let messaggio = `Sei sicuro di voler eliminare il PIN${guestName ? ' di "' + guestName + '"' : ''}${pinVal ? ' (' + pinVal + ')' : ''}?`;
             if (confirm(messaggio)) {
                 tr.remove();
             }
