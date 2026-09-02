@@ -394,8 +394,8 @@
                 const pinListData = JSON.stringify(dev.pinList || []).replace(/"/g, '&quot;');
                 item.innerHTML = `
                     <div class="device-header">
-                        <span class="device-title">🔑 ${dev.name}</span>
-                        ${actionButtons}
+                        <span class="device-title">🔢 ${dev.name}</span>
+                        ${actionButtons}  
                     </div>
                     <div class="pin-display-wrapper">
                         <div class="pin-display" id="pin-display-${idx}">••••</div>
@@ -412,7 +412,7 @@
                 const btnId = isGuest ? `gbtn-${idx}` : `btn-${idx}`;
                 item.innerHTML = `
                     <div class="device-header">
-                        <span class="device-title">🏢 ${dev.name}</span>
+                        <span class="device-title">🔘 ${dev.name}</span>
                         ${actionButtons}
                     </div>
                     <button class="btn btn-trigger" id="${btnId}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', '${btnId}', '${statusId}')">
