@@ -11,6 +11,11 @@
         h1 { text-align: center; color: #f8fafc; font-size: 22px; margin-bottom: 20px; }
         h2 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 0; }
         
+        /* BARRA SUPERIORE ADMIN */
+        .admin-header-actions { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; }
+        .btn-change-pass { background-color: #475569; color: #f8fafc; border: none; padding: 8px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-change-pass:hover { background-color: #64748b; }
+
         /* STILI NAVIGAZIONE A SCHEDE (TABS) */
         .tab-nav { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #334155; }
         .tab-btn { flex: 1; padding: 12px; background-color: #1e293b; color: #94a3b8; border: none; border-top-left-radius: 8px; border-top-right-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; text-align: center; }
@@ -91,10 +96,41 @@
             <label for="adminPassword" style="text-align: left;">Inserisci Password Admin <span class="req">*</span></label>
             <div class="password-input-wrapper">
                 <input type="password" id="adminPassword" placeholder="••••••••" onkeyup="if(event.key==='Enter') verificaPassword()">
-                <button type="button" class="toggle-password-btn" id="toggleAdminPasswordBtn" onclick="toggleAdminPassword()">👁️</button>
+                <button type="button" class="toggle-password-btn" id="toggleAdminPasswordBtn" onclick="togglePasswordVisibility('adminPassword', 'toggleAdminPasswordBtn')">👁️</button>
             </div>
             <button class="btn btn-add" onclick="verificaPassword()">Accedi</button>
             <div id="loginError" class="login-err">Password errata! Riprova.</div>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="#" onclick="ripristinaPasswordPredefinita()" style="color: #64748b; font-size: 11px; text-decoration: underline;">Password dimenticata? Ripristina di default</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP CAMBIO PASSWORD ADMIN -->
+    <div id="changePassModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="max-width: 400px;">
+            <h2>🔑 Cambia Password Admin</h2>
+            
+            <label>Password Attuale <span class="req">*</span></label>
+            <div class="password-input-wrapper">
+                <input type="password" id="currAdminPass" placeholder="••••••••">
+                <button type="button" class="toggle-password-btn" id="btnToggleCurr" onclick="togglePasswordVisibility('currAdminPass', 'btnToggleCurr')">👁️</button>
+            </div>
+
+            <label>Nuova Password <span class="req">*</span></label>
+            <div class="password-input-wrapper">
+                <input type="password" id="newAdminPass" placeholder="Nuova password">
+                <button type="button" class="toggle-password-btn" id="btnToggleNew" onclick="togglePasswordVisibility('newAdminPass', 'btnToggleNew')">👁️</button>
+            </div>
+
+            <label>Conferma Nuova Password <span class="req">*</span></label>
+            <div class="password-input-wrapper">
+                <input type="password" id="confirmAdminPass" placeholder="Ripeti nuova password">
+                <button type="button" class="toggle-password-btn" id="btnToggleConfirm" onclick="togglePasswordVisibility('confirmAdminPass', 'btnToggleConfirm')">👁️</button>
+            </div>
+
+            <button class="btn btn-add" onclick="salvaNuovaPasswordAdmin()">Salva Password</button>
+            <button class="btn" onclick="chiudiModalPass()" style="background-color: #64748b; margin-top: 8px;">Annulla</button>
         </div>
     </div>
 
@@ -179,6 +215,10 @@
         <!-- VISTA AMMINISTRATORE -->
         <div id="adminView" style="display: none;">
             
+            <div class="admin-header-actions">
+                <button class="btn-change-pass" onclick="apriModalPass()">🔑 Cambia Password Admin</button>
+            </div>
+
             <!-- BARRA DI NAVIGAZIONE A SCHEDE -->
             <div class="tab-nav">
                 <button class="tab-btn active" onclick="switchTab('tab-create')">➕ Aggiungi Dispositivo</button>
@@ -256,14 +296,18 @@
     </div>
 
     <script>
-        const PASSWORD_ADMIN = "admin123";
+        const DEFAULT_PASSWORD = "admin123";
+
+        function ottieniPasswordAdmin() {
+            return localStorage.getItem('shelly_admin_pass') || DEFAULT_PASSWORD;
+        }
 
         const currentPins = {};
         const pinVisibility = {};
 
-        function toggleAdminPassword() {
-            const passwordInput = document.getElementById('adminPassword');
-            const toggleBtn = document.getElementById('toggleAdminPasswordBtn');
+        function togglePasswordVisibility(inputId, btnId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleBtn = document.getElementById(btnId);
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 toggleBtn.innerText = '🙈';
@@ -290,7 +334,7 @@
             const input = document.getElementById('adminPassword').value;
             const errDiv = document.getElementById('loginError');
 
-            if (input === PASSWORD_ADMIN) {
+            if (input === ottieniPasswordAdmin()) {
                 sessionStorage.setItem('is_admin_authenticated', 'true');
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('adminView').style.display = 'block';
@@ -298,6 +342,50 @@
             } else {
                 errDiv.style.display = 'block';
             }
+        }
+
+        function ripristinaPasswordPredefinita() {
+            if (confirm("Vuoi ripristinare la password predefinita 'admin123'?")) {
+                localStorage.setItem('shelly_admin_pass', DEFAULT_PASSWORD);
+                alert("Password ripristinata a: admin123");
+            }
+        }
+
+        /* GESTIONE POPUP MODIFICA PASSWORD ADMIN */
+        function apriModalPass() {
+            document.getElementById('currAdminPass').value = '';
+            document.getElementById('newAdminPass').value = '';
+            document.getElementById('confirmAdminPass').value = '';
+            document.getElementById('changePassModal').style.display = 'flex';
+        }
+
+        function chiudiModalPass() {
+            document.getElementById('changePassModal').style.display = 'none';
+        }
+
+        function salvaNuovaPasswordAdmin() {
+            const curr = document.getElementById('currAdminPass').value;
+            const newP = document.getElementById('newAdminPass').value;
+            const conf = document.getElementById('confirmAdminPass').value;
+
+            if (curr !== ottieniPasswordAdmin()) {
+                alert("La password attuale non è corretta.");
+                return;
+            }
+
+            if (!newP) {
+                alert("La nuova password non può essere vuota.");
+                return;
+            }
+
+            if (newP !== conf) {
+                alert("La nuova password e la conferma non coincidono.");
+                return;
+            }
+
+            localStorage.setItem('shelly_admin_pass', newP);
+            alert("✔ Password Admin aggiornata con successo!");
+            chiudiModalPass();
         }
 
         function migraDatiEsistenti() {
