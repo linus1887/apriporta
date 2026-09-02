@@ -26,6 +26,12 @@
         .btn-delete { background-color: #ef4444; color: white; border: none; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; }
         .btn-house-share { background-color: #8b5cf6; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; }
         .status-msg { font-size: 13px; text-align: center; margin-top: 8px; min-height: 18px; color: #94a3b8; }
+        
+        /* STILI TASTIERINO PIN */
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .keypad-btn { background-color: #334155; color: white; font-size: 20px; padding: 15px; border-radius: 8px; border: none; cursor: pointer; text-align: center; font-weight: bold; }
+        .keypad-btn:active { background-color: #38bdf8; }
+        .pin-display { text-align: center; font-size: 24px; letter-spacing: 8px; margin-bottom: 10px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; min-height: 48px; }
     </style>
 </head>
 <body>
@@ -33,13 +39,11 @@
     <div class="container">
         <h1 id="pageTitle">Controllo Shelly Remote</h1>
 
-        <!-- VISTA OSPITE -->
         <div id="guestView" class="card" style="display: none;">
             <h2 id="guestHouseName">I tuoi Comandi</h2>
             <div id="guestDevicesList"></div>
         </div>
 
-        <!-- VISTA AMMINISTRATORE -->
         <div id="adminView">
             <div class="card">
                 <h2>Le Tue Case e Dispositivi</h2>
@@ -50,18 +54,26 @@
                 <h2>Aggiungi Nuovo Dispositivo</h2>
                 
                 <label>Seleziona Casa / Gruppo</label>
-                <select id="devHouseSelect" onchange="gestisciSelezioneCasa()">
-                    <!-- Popolato dinamicamente da JS -->
-                </select>
+                <select id="devHouseSelect" onchange="gestisciSelezioneCasa()"></select>
 
-                <!-- Input nascosto per inserire il nome di una NUOVA casa -->
                 <div id="newHouseContainer" style="display: none;">
                     <label>Nome Nuova Casa</label>
                     <input type="text" id="devNewHouse" placeholder="es. Villa Mare, Appartamento 2">
                 </div>
 
                 <label>Nome Pulsante / Comando</label>
-                <input type="text" id="devName" placeholder="es. Cancello Pedonale, Garage">
+                <input type="text" id="devName" placeholder="es. Portone Palazzo, Porta Appartamento">
+
+                <label>Tipo Accesso</label>
+                <select id="devType" onchange="gestisciTipoAccesso()">
+                    <option value="button">🏢 Portone Palazzo (Tasto Diretto)</option>
+                    <option value="pin">🔑 Porta Appartamento (Tastierino PIN)</option>
+                </select>
+
+                <div id="pinContainer" style="display: none;">
+                    <label>PIN di Sblocco Porta (Numerico)</label>
+                    <input type="password" id="devPin" placeholder="es. 1234" maxlength="6" inputmode="numeric">
+                </div>
 
                 <label>Server URL</label>
                 <input type="text" id="devUrl" placeholder="https://shelly-278-eu.shelly.cloud">
@@ -78,14 +90,18 @@
     </div>
 
     <script>
+        const currentPins = {};
+
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
             const houseDataParam = urlParams.get('houseData');
 
             if (houseDataParam) {
-                // MODALITÀ OSPITE
+                // MODALITÀ OSPITE: Decodifica da Base64
                 try {
-                    const houseObj = JSON.parse(decodeURIComponent(houseDataParam));
+                    const jsonString = decodeURIComponent(escape(atob(houseDataParam)));
+                    const houseObj = JSON.parse(jsonString);
+                    
                     document.getElementById('adminView').style.display = 'none';
                     document.getElementById('guestView').style.display = 'block';
                     document.getElementById('pageTitle').innerText = houseObj.house;
@@ -95,29 +111,70 @@
                     houseObj.devices.forEach((dev, idx) => {
                         const item = document.createElement('div');
                         item.className = 'device-item';
-                        item.innerHTML = `
-                            <div class="device-header">
-                                <span class="device-title">${dev.name}</span>
-                            </div>
-                            <button class="btn btn-trigger" id="gbtn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'gbtn-${idx}', 'gstatus-${idx}')">ATTIVA</button>
-                            <div class="status-msg" id="gstatus-${idx}">Premia per attivare</div>
-                        `;
+
+                        if (dev.type === 'pin') {
+                            item.innerHTML = `
+                                <div class="device-header">
+                                    <span class="device-title">🔑 ${dev.name}</span>
+                                </div>
+                                <div class="pin-display" id="pin-display-${idx}">••••</div>
+                                <div class="keypad">
+                                    ${[1,2,3,4,5,6,7,8,9,'C',0,'OK'].map(val => `
+                                        <button class="keypad-btn" onclick="gestisciPinInput('${val}', ${idx}, '${dev.url}', '${dev.id}', '${dev.key}', '${dev.pin}')">${val}</button>
+                                    `).join('')}
+                                </div>
+                                <div class="status-msg" id="gstatus-${idx}">Inserisci il PIN per aprire</div>
+                            `;
+                        } else {
+                            item.innerHTML = `
+                                <div class="device-header">
+                                    <span class="device-title">🏢 ${dev.name}</span>
+                                </div>
+                                <button class="btn btn-trigger" id="gbtn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'gbtn-${idx}', 'gstatus-${idx}')">ATTIVA PORTONE</button>
+                                <div class="status-msg" id="gstatus-${idx}">Premia per attivare</div>
+                            `;
+                        }
                         container.appendChild(item);
                     });
                 } catch (e) {
                     alert("Link ospite non valido o corrotto.");
                 }
             } else {
-                // MODALITÀ ADMIN
                 caricaDispositiviAdmin();
             }
         });
 
+        function gestisciPinInput(val, index, url, id, key, correctPin) {
+            if (!currentPins[index]) currentPins[index] = "";
+            const display = document.getElementById(`pin-display-${index}`);
+            const statusDiv = document.getElementById(`gstatus-${index}`);
+
+            if (val === 'C') {
+                currentPins[index] = "";
+                display.innerText = "••••";
+                statusDiv.innerText = "Inserisci il PIN per aprire";
+            } else if (val === 'OK') {
+                if (currentPins[index] === correctPin) {
+                    inviaComando(url, id, key, null, `gstatus-${index}`);
+                } else {
+                    statusDiv.style.color = "#f87171";
+                    statusDiv.innerText = "✖ PIN Errato!";
+                }
+                currentPins[index] = "";
+                display.innerText = "••••";
+            } else {
+                if (currentPins[index].length < 6) {
+                    currentPins[index] += val;
+                    display.innerText = "•".repeat(currentPins[index].length);
+                }
+            }
+        }
+
         function inviaComando(serverUrl, deviceId, authKey, btnId, statusId) {
-            const btn = document.getElementById(btnId);
+            const btn = btnId ? document.getElementById(btnId) : null;
             const statusDiv = document.getElementById(statusId);
 
-            btn.disabled = true;
+            if (btn) btn.disabled = true;
             statusDiv.style.color = "#38bdf8";
             statusDiv.innerText = "Invio comando...";
 
@@ -150,7 +207,7 @@
                 statusDiv.innerText = "✖ Errore di connessione";
             })
             .finally(() => {
-                setTimeout(() => { btn.disabled = false; }, 3000);
+                if (btn) setTimeout(() => { btn.disabled = false; }, 3000);
             });
         }
 
@@ -158,7 +215,6 @@
             const container = document.getElementById('housesContainer');
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
 
-            // Aggiorna anche la select delle case
             popolaMenuCase(dispositivi);
 
             if (dispositivi.length === 0) {
@@ -188,13 +244,14 @@
                     const idx = dev.originalIndex;
                     const item = document.createElement('div');
                     item.className = 'device-item';
+                    const icon = dev.type === 'pin' ? '🔑 (PIN)' : '🏢 (Pulsante)';
                     item.innerHTML = `
                         <div class="device-header">
-                            <span class="device-title">${dev.name}</span>
+                            <span class="device-title">${icon} ${dev.name}</span>
                             <button class="btn-delete" onclick="eliminaDispositivo(${idx})">Elimina</button>
                         </div>
-                        <button class="btn btn-trigger" id="btn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'btn-${idx}', 'status-${idx}')">ATTIVA RELÈ</button>
-                        <div class="status-msg" id="status-${idx}">Premia per attivare</div>
+                        <button class="btn btn-trigger" id="btn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'btn-${idx}', 'status-${idx}')">TEST ATTIVAZIONE</button>
+                        <div class="status-msg" id="status-${idx}">Premia per testare</div>
                     `;
                     houseDiv.appendChild(item);
                 });
@@ -205,17 +262,11 @@
 
         function popolaMenuCase(dispositivi) {
             const select = document.getElementById('devHouseSelect');
-            
-            // Estrae i nomi unici delle case esistenti
             const caseUniche = [...new Set(dispositivi.map(d => d.house || "Principale"))];
             
-            if (caseUniche.length === 0) {
-                caseUniche.push("Principale");
-            }
+            if (caseUniche.length === 0) caseUniche.push("Principale");
 
             select.innerHTML = '';
-            
-            // Popola le opzioni esistenti
             caseUniche.forEach(casa => {
                 const opt = document.createElement('option');
                 opt.value = casa;
@@ -223,7 +274,6 @@
                 select.appendChild(opt);
             });
 
-            // Aggiunge l'opzione per creare una nuova casa
             const optNew = document.createElement('option');
             optNew.value = "NEW_HOUSE";
             optNew.innerText = "➕ Crea nuova casa...";
@@ -235,31 +285,35 @@
         function gestisciSelezioneCasa() {
             const select = document.getElementById('devHouseSelect');
             const newHouseContainer = document.getElementById('newHouseContainer');
+            newHouseContainer.style.display = select.value === "NEW_HOUSE" ? "block" : "none";
+        }
 
-            if (select.value === "NEW_HOUSE") {
-                newHouseContainer.style.display = "block";
-            } else {
-                newHouseContainer.style.display = "none";
-            }
+        function gestisciTipoAccesso() {
+            const type = document.getElementById('devType').value;
+            const pinContainer = document.getElementById('pinContainer');
+            pinContainer.style.display = type === 'pin' ? 'block' : 'none';
         }
 
         function copiaLinkCasa(houseName) {
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
             const houseDevices = dispositivi
                 .filter(d => (d.house || "Principale") === houseName)
-                .map(d => ({ name: d.name, url: d.url, key: d.key, id: d.id }));
+                .map(d => ({ name: d.name, type: d.type, pin: d.pin, url: d.url, key: d.key, id: d.id }));
 
             const payload = {
                 house: houseName,
                 devices: houseDevices
             };
 
+            // Codifica l'intero payload JSON in Base64 per nascondere i parametri nell'URL
+            const jsonString = JSON.stringify(payload);
+            const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
+
             const baseUrl = window.location.href.split('?')[0];
-            const encodedData = encodeURIComponent(JSON.stringify(payload));
-            const fullUrl = `${baseUrl}?houseData=${encodedData}`;
+            const fullUrl = `${baseUrl}?houseData=${base64Data}`;
 
             navigator.clipboard.writeText(fullUrl).then(() => {
-                alert(`✔ Link per "${houseName}" copiato negli appunti!\n\nL'ospite vedrà tutti i tasti di questa casa.`);
+                alert(`✔ Link per "${houseName}" copiato negli appunti!\n\nI dati sensibili sono stati codificati nell'URL.`);
             }).catch(() => {
                 prompt("Copia manualmente il link:", fullUrl);
             });
@@ -267,35 +321,33 @@
 
         function salvaDispositivo() {
             const select = document.getElementById('devHouseSelect');
-            let house = select.value;
+            let house = select.value === "NEW_HOUSE" ? document.getElementById('devNewHouse').value.trim() : select.value;
 
-            // Se è selezionato "Crea nuova casa", usa il valore del campo di testo dedicato
-            if (house === "NEW_HOUSE") {
-                house = document.getElementById('devNewHouse').value.trim();
-                if (!house) {
-                    alert("Inserisci un nome per la nuova casa!");
-                    return;
-                }
-            }
+            const name = document.getElementById('devName').value.trim();
+            const type = document.getElementById('devType').value;
+            const pin  = document.getElementById('devPin').value.trim();
+            const url  = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
+            const key  = document.getElementById('devKey').value.trim();
+            const id   = document.getElementById('devId').value.trim();
 
-            const name  = document.getElementById('devName').value.trim();
-            const url   = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
-            const key   = document.getElementById('devKey').value.trim();
-            const id    = document.getElementById('devId').value.trim();
-
-            if (!name || !url || !key || !id) {
+            if (!house || !name || !url || !key || !id) {
                 alert("Compila tutti i campi obbligatori!");
                 return;
             }
 
+            if (type === 'pin' && !pin) {
+                alert("Inserisci un PIN per la porta dell'appartamento!");
+                return;
+            }
+
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            dispositivi.push({ house, name, url, key, id });
+            dispositivi.push({ house, name, type, pin, url, key, id });
 
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
 
-            // Reset campi
             document.getElementById('devNewHouse').value = '';
             document.getElementById('devName').value = '';
+            document.getElementById('devPin').value = '';
             document.getElementById('devUrl').value = '';
             document.getElementById('devKey').value = '';
             document.getElementById('devId').value = '';
