@@ -10,11 +10,19 @@
         .container { max-width: 480px; width: 100%; }
         h1 { text-align: center; color: #f8fafc; font-size: 22px; margin-bottom: 20px; }
         h2 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 0; }
-        .house-header { margin: 20px 0 10px 0; border-bottom: 1px solid #334155; padding-bottom: 8px; }
-        .house-title { font-size: 18px; color: #f59e0b; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .house-address { font-size: 13px; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+        
+        /* STILI CARTELLE / ACCORDION */
+        .folder-card { background-color: #1e293b; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; overflow: hidden; }
+        .folder-header { background-color: #334155; padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .folder-header:hover { background-color: #475569; }
+        .folder-title { font-size: 16px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 8px; }
+        .folder-content { padding: 16px; display: none; }
+        .folder-card.open .folder-content { display: block; }
+        .folder-card.open .folder-header { background-color: #1e293b; border-bottom: 1px solid #334155; }
+        
+        .house-address { font-size: 13px; color: #94a3b8; margin-bottom: 15px; display: flex; align-items: center; gap: 4px; }
         .house-address a { color: #38bdf8; text-decoration: none; }
-        .house-address a:hover { text-decoration: underline; }
+        
         .card { background-color: #1e293b; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); }
         label { display: block; font-size: 12px; margin-bottom: 4px; color: #94a3b8; text-transform: uppercase; }
         input, select { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
@@ -28,7 +36,7 @@
         .btn-trigger:active { transform: scale(0.96); background-color: #1d4ed8; }
         .btn-trigger:disabled { background-color: #64748b; cursor: not-allowed; box-shadow: none; }
         .btn-delete { background-color: #ef4444; color: white; border: none; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; }
-        .btn-house-share { background-color: #8b5cf6; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; }
+        .btn-house-share { background-color: #8b5cf6; color: white; border: none; padding: 8px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; width: 100%; }
         .status-msg { font-size: 13px; text-align: center; margin-top: 8px; min-height: 18px; color: #94a3b8; }
         
         /* STILI TASTIERINO PIN */
@@ -52,19 +60,19 @@
         <!-- VISTA AMMINISTRATORE -->
         <div id="adminView">
             <div class="card">
-                <h2>Le Tue Case e Dispositivi</h2>
+                <h2>Cartelle Appartamenti</h2>
                 <div id="housesContainer"></div>
             </div>
 
             <div class="card">
                 <h2>Aggiungi Nuovo Dispositivo</h2>
                 
-                <label>Seleziona Casa / Gruppo</label>
+                <label>Seleziona Casa / Cartella</label>
                 <select id="devHouseSelect" onchange="gestisciSelezioneCasa()"></select>
 
                 <div id="newHouseContainer" style="display: none;">
                     <label>Nome Nuova Casa</label>
-                    <input type="text" id="devNewHouse" placeholder="es. Villa Mare, Appartamento 2">
+                    <input type="text" id="devNewHouse" placeholder="es. Appartamento Mare">
                     
                     <label>Indirizzo della Casa</label>
                     <input type="text" id="devHouseAddress" placeholder="es. Via Roma 123, Milano">
@@ -106,7 +114,6 @@
             const houseDataParam = urlParams.get('houseData');
 
             if (houseDataParam) {
-                // MODALITÀ OSPITE
                 try {
                     const jsonString = decodeURIComponent(escape(atob(houseDataParam)));
                     const houseObj = JSON.parse(jsonString);
@@ -120,11 +127,10 @@
                         : '';
 
                     document.getElementById('guestHouseHeader').innerHTML = `
-                        <div class="house-header">
-                            <div class="house-title">🏠 ${houseObj.house}</div>
+                        <div style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h2 style="border:none; margin:0; color:#f59e0b;">🏠 ${houseObj.house}</h2>
                             ${addressHtml}
                         </div>
-                        <h2 style="margin-top: 15px;">Comandi disponibili:</h2>
                     `;
 
                     const container = document.getElementById('guestDevicesList');
@@ -139,7 +145,6 @@
             }
         });
 
-        // Funzione centralizzata per generare l'HTML di un dispositivo (PIN o Bottone)
         function generaElementoDispositivo(dev, idx, isGuest = false) {
             const item = document.createElement('div');
             item.className = 'device-item';
@@ -249,7 +254,7 @@
             popolaMenuCase(dispositivi);
 
             if (dispositivi.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #64748b;">Nessun dispositivo presente.</p>';
+                container.innerHTML = '<p style="text-align: center; color: #64748b;">Nessun appartamento presente.</p>';
                 return;
             }
 
@@ -263,35 +268,37 @@
             container.innerHTML = '';
 
             for (const houseName in caseGroup) {
-                const houseDiv = document.createElement('div');
                 const houseAddress = caseGroup[houseName][0].address || "";
                 const addressHtml = houseAddress 
                     ? `<div class="house-address">📍 <a href="https://maps.google.com/?q=${encodeURIComponent(houseAddress)}" target="_blank">${houseAddress}</a></div>` 
                     : '';
 
-                houseDiv.innerHTML = `
-                    <div class="house-header">
-                        <div class="house-title">
-                            <span>🏠 ${houseName}</span>
-                            <button class="btn-house-share" onclick="copiaLinkCasa('${houseName}')">🔗 Copia Link Casa</button>
-                        </div>
+                const folderDiv = document.createElement('div');
+                folderDiv.className = 'folder-card';
+                folderDiv.innerHTML = `
+                    <div class="folder-header" onclick="this.parentElement.classList.toggle('open')">
+                        <div class="folder-title">📁 ${houseName}</div>
+                        <span style="font-size: 12px; color: #94a3b8;">▼</span>
+                    </div>
+                    <div class="folder-content">
                         ${addressHtml}
+                        <button class="btn-house-share" onclick="copiaLinkCasa('${houseName}')">🔗 Copia Link Ospite</button>
+                        <div id="dev-list-${houseName}"></div>
                     </div>
                 `;
 
+                const devListContainer = folderDiv.querySelector(`#dev-list-${houseName}`);
                 caseGroup[houseName].forEach((dev) => {
-                    houseDiv.appendChild(generaElementoDispositivo(dev, dev.originalIndex, false));
+                    devListContainer.appendChild(generaElementoDispositivo(dev, dev.originalIndex, false));
                 });
 
-                container.appendChild(houseDiv);
+                container.appendChild(folderDiv);
             }
         }
 
         function popolaMenuCase(dispositivi) {
             const select = document.getElementById('devHouseSelect');
             const caseUniche = [...new Set(dispositivi.map(d => d.house || "Principale"))];
-            
-            if (caseUniche.length === 0) caseUniche.push("Principale");
 
             select.innerHTML = '';
             caseUniche.forEach(casa => {
@@ -303,7 +310,7 @@
 
             const optNew = document.createElement('option');
             optNew.value = "NEW_HOUSE";
-            optNew.innerText = "➕ Crea nuova casa...";
+            optNew.innerText = "➕ Nuova cartella / casa...";
             select.appendChild(optNew);
 
             gestisciSelezioneCasa();
@@ -328,12 +335,7 @@
             const houseAddress = filteredDevices.length > 0 ? (filteredDevices[0].address || "") : "";
             const houseDevices = filteredDevices.map(d => ({ name: d.name, type: d.type, pin: d.pin, url: d.url, key: d.key, id: d.id }));
 
-            const payload = {
-                house: houseName,
-                address: houseAddress,
-                devices: houseDevices
-            };
-
+            const payload = { house: houseName, address: houseAddress, devices: houseDevices };
             const jsonString = JSON.stringify(payload);
             const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
 
@@ -341,7 +343,7 @@
             const fullUrl = `${baseUrl}?houseData=${base64Data}`;
 
             navigator.clipboard.writeText(fullUrl).then(() => {
-                alert(`✔ Link per "${houseName}" copiato negli appunti!`);
+                alert(`✔ Link cartella "${houseName}" copiato negli appunti!`);
             }).catch(() => {
                 prompt("Copia manualmente il link:", fullUrl);
             });
@@ -375,7 +377,7 @@
             }
 
             if (type === 'pin' && !pin) {
-                alert("Inserisci un PIN per la porta dell'appartamento!");
+                alert("Inserisci un PIN per la porta!");
                 return;
             }
 
