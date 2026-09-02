@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #0f172a; color: #ffffff; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { max-width: 480px; width: 100%; }
+        .container { max-width: 680px; width: 100%; } /* Allargata la vista generale da 480px a 680px */
         h1 { text-align: center; color: #f8fafc; font-size: 22px; margin-bottom: 20px; }
         h2 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 0; }
         
@@ -29,12 +29,13 @@
         input, select { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
         input:focus, select:focus { outline: none; border-color: #38bdf8; }
         
-        /* TABELLA PIN OSPITI */
-        .pin-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 12px; }
-        .pin-table th { text-align: center; background-color: #0f172a; color: #38bdf8; padding: 8px; border: 1px solid #334155; }
-        .pin-table td { padding: 6px; border: 1px solid #334155; background-color: #1e293b; text-align: center; }
-        .pin-table input[type="text"], .pin-table input[type="date"] { margin-bottom: 0; padding: 6px; font-size: 12px; }
-        .pin-table input[type="checkbox"] { width: auto; margin: 0; cursor: pointer; }
+        /* TABELLA PIN OSPITI INGRANDITA */
+        .table-responsive { width: 100%; overflow-x: auto; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; }
+        .pin-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 500px; }
+        .pin-table th { text-align: center; background-color: #0f172a; color: #38bdf8; padding: 10px; border: 1px solid #334155; }
+        .pin-table td { padding: 8px; border: 1px solid #334155; background-color: #1e293b; text-align: center; }
+        .pin-table input[type="text"], .pin-table input[type="date"] { margin-bottom: 0; padding: 8px 10px; font-size: 13px; }
+        .pin-table input[type="checkbox"] { width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #38bdf8; }
 
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; }
         .btn-add { background-color: #10b981; color: white; margin-top: 5px; }
@@ -45,7 +46,7 @@
         .btn-house-rename { background-color: #f59e0b; }
         .btn-house-delete { background-color: #dc2626; }
         .house-actions-row { display: flex; gap: 6px; margin-bottom: 15px; }
-        .btn-small-add { background-color: #3b82f6; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-bottom: 12px; }
+        .btn-small-add { background-color: #3b82f6; color: white; border: none; padding: 8px 14px; font-size: 13px; border-radius: 6px; cursor: pointer; margin-bottom: 12px; font-weight: bold; }
         
         .device-item { background-color: #0f172a; padding: 16px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; }
         .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -125,21 +126,23 @@
                     <label>Tabella Gestione PIN Ospiti <span class="req">*</span></label>
                     <button type="button" class="btn-small-add" onclick="aggiungiRigaPinTable()">+ Aggiungi Ospite</button>
                     
-                    <table class="pin-table">
-                        <thead>
-                            <tr>
-                                <th>Nome Ospite</th>
-                                <th>PIN <span class="req">*</span></th>
-                                <th>Perm.</th>
-                                <th>Dal</th>
-                                <th>Al</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="pinTableBody">
-                            <!-- Righe create dinamicamente -->
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="pin-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Nome Ospite</th>
+                                    <th style="width: 20%;">PIN <span class="req">*</span></th>
+                                    <th style="width: 10%;">Perm.</th>
+                                    <th style="width: 20%;">Dal</th>
+                                    <th style="width: 20%;">Al</th>
+                                    <th style="width: 5%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="pinTableBody">
+                                <!-- Righe create dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <label>Server URL <span class="req">*</span></label>
@@ -158,7 +161,6 @@
     </div>
 
     <script>
-        // IMPOSTA QUI LA TUA PASSWORD ADMIN
         const PASSWORD_ADMIN = "admin123";
 
         const currentPins = {};
@@ -312,7 +314,7 @@
                 <td><input type="checkbox" class="pin-perm" ${isPermanent ? 'checked' : ''} onchange="gestisciStatoPermanente(this)"></td>
                 <td><input type="date" class="pin-start" value="${startDate}" ${isPermanent ? 'disabled' : ''}></td>
                 <td><input type="date" class="pin-end" value="${endDate}" ${isPermanent ? 'disabled' : ''}></td>
-                <td><button type="button" class="btn-delete" style="padding: 4px 6px;" onclick="rimuoviRigaPin(this)">✕</button></td>
+                <td><button type="button" class="btn-delete" style="padding: 6px 8px;" onclick="rimuoviRigaPin(this)">✕</button></td>
             `;
             tbody.appendChild(tr);
         }
@@ -409,8 +411,6 @@
 
                 const pinValido = pinList.find(p => {
                     if (p.pin !== pinDigitato) return false;
-
-                    // Se è contrassegnato come permanente, il controllo delle date viene ignorato
                     if (p.isPermanent) return true;
 
                     const inizio = p.startDate ? new Date(p.startDate) : null;
