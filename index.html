@@ -35,7 +35,7 @@
         <!-- VISTA PER L'OSPITE (SI ATTIVA SOLO SE NELL'URL CI SONO I PARAMETRI) -->
         <div id="guestView" class="card" style="display: none;">
             <h2 id="guestDeviceName">Dispositivo Ospite</h2>
-            <button class="btn btn-trigger" id="guestBtn" onclick="attivaOspite()">ATTIVA RELÈ</button>
+            <button class="btn btn-trigger" id="guestBtn" onclick="attivaOspite()">APRI</button>
             <div class="status-msg" id="guestStatus">Premia per attivare</div>
         </div>
 
@@ -176,7 +176,7 @@
                             <button class="btn-delete" onclick="eliminaDispositivo(${index})">Elimina</button>
                         </div>
                     </div>
-                    <button class="btn btn-trigger" id="btn-${index}" onclick="attivaDispositivo(${index})">ATTIVA RELÈ</button>
+                    <button class="btn btn-trigger" id="btn-${index}" onclick="attivaDispositivo(${index})">APRI</button>
                     <div class="status-msg" id="status-${index}">Premia per attivare</div>
                 `;
                 container.appendChild(item);
