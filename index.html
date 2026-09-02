@@ -5,147 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controllo Shelly Remote</title>
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        body {
-            background-color: #0f172a;
-            color: #ffffff;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 450px;
-            width: 100%;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #f8fafc;
-            margin-top: 0;
-        }
-        h1 {
-            font-size: 22px;
-            margin-bottom: 20px;
-        }
-        h2 {
-            font-size: 16px;
-            margin-bottom: 15px;
-            color: #38bdf8;
-            text-align: left;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 8px;
-        }
-        .card {
-            background-color: #1e293b;
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-        }
-        label {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 4px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        input {
-            width: 100%;
-            padding: 10px 12px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            background-color: #0f172a;
-            color: #fff;
-            font-size: 14px;
-        }
-        input:focus {
-            outline: none;
-            border-color: #38bdf8;
-        }
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn-add {
-            background-color: #10b981;
-            color: white;
-            margin-top: 5px;
-        }
-        .btn-add:hover {
-            background-color: #059669;
-        }
-        .device-item {
-            background-color: #0f172a;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #334155;
-        }
-        .device-item:last-child {
-            margin-bottom: 0;
-        }
-        .device-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .device-title {
-            font-weight: bold;
-            font-size: 16px;
-            color: #f1f5f9;
-        }
-        .btn-trigger {
-            background-color: #2563eb;
-            color: white;
-            padding: 16px;
-            font-size: 18px;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
-        .btn-trigger:active {
-            transform: scale(0.96);
-            background-color: #1d4ed8;
-        }
-        .btn-trigger:disabled {
-            background-color: #64748b;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-        .btn-delete {
-            background-color: transparent;
-            color: #ef4444;
-            border: 1px solid #ef4444;
-            padding: 4px 8px;
-            font-size: 11px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: auto;
-        }
-        .btn-delete:hover {
-            background-color: #ef4444;
-            color: white;
-        }
-        .status-msg {
-            font-size: 13px;
-            text-align: center;
-            margin-top: 10px;
-            min-height: 18px;
-            color: #94a3b8;
-        }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #0f172a; color: #ffffff; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { max-width: 450px; width: 100%; }
+        h1 { text-align: center; color: #f8fafc; font-size: 22px; margin-bottom: 20px; }
+        h2 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 0; }
+        .card { background-color: #1e293b; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); }
+        label { display: block; font-size: 12px; margin-bottom: 4px; color: #94a3b8; text-transform: uppercase; }
+        input { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
+        input:focus { outline: none; border-color: #38bdf8; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.2s ease; }
+        .btn-add { background-color: #10b981; color: white; margin-top: 5px; }
+        .device-item { background-color: #0f172a; padding: 16px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; }
+        .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .device-title { font-weight: bold; font-size: 16px; color: #f1f5f9; }
+        .btn-trigger { background-color: #2563eb; color: white; padding: 16px; font-size: 18px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        .btn-trigger:active { transform: scale(0.96); background-color: #1d4ed8; }
+        .btn-trigger:disabled { background-color: #64748b; cursor: not-allowed; box-shadow: none; }
+        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; }
+        .status-msg { font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -153,18 +31,13 @@
     <div class="container">
         <h1>Controllo Shelly Remote</h1>
 
-        <!-- LISTA DISPOSITIVI ATTIVI -->
         <div class="card">
             <h2>I Tuoi Dispositivi</h2>
-            <div id="devicesList">
-                <p style="text-align: center; color: #64748b;">Nessun dispositivo salvato.</p>
-            </div>
+            <div id="devicesList"></div>
         </div>
 
-        <!-- FORM PER AGGIUNGERE UN NUOVO DISPOSITIVO -->
         <div class="card">
             <h2>Aggiungi Nuovo Dispositivo</h2>
-            
             <label>Nome Dispositivo</label>
             <input type="text" id="devName" placeholder="es. Cancello Casa">
 
@@ -182,25 +55,28 @@
     </div>
 
     <script>
-        // Dispositivo di default con i tuoi dati funzionanti
-        const defaultDevice = {
+        const initialDevice = {
             name: "Dispositivo Principale",
             url: "https://shelly-278-eu.shelly.cloud",
             key: "MjhmYzlhdWlkD629E35BB1288E526F6E5EA6AB0D7626360B4856675F8E98F43BE86A87BEC127B912184F320B1224",
             id: "1c6920095acc"
         };
 
-        // Carica i dispositivi all'avvio della pagina
-        document.addEventListener("DOMContentLoaded", caricaDispositivi);
+        document.addEventListener("DOMContentLoaded", function() {
+            // Se la memoria è completamente vuota (primo avvio assoluto) imposta il dispositivo iniziale
+            if (localStorage.getItem('shelly_devices') === null) {
+                localStorage.setItem('shelly_devices', JSON.stringify([initialDevice]));
+            }
+            caricaDispositivi();
+        });
 
         function caricaDispositivi() {
             const container = document.getElementById('devicesList');
-            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices'));
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
 
-            // Se è la prima volta in assoluto, carica il dispositivo di default
-            if (!dispositivi || dispositivi.length === 0) {
-                dispositivi = [defaultDevice];
-                localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+            if (dispositivi.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b;">Nessun dispositivo salvato.</p>';
+                return;
             }
 
             container.innerHTML = '';
@@ -231,14 +107,11 @@
                 return;
             }
 
-            const nuovoDispositivo = { name, url, key, id };
-            
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            dispositivi.push(nuovoDispositivo);
+            dispositivi.push({ name, url, key, id });
 
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
 
-            // Pulisci i campi del form
             document.getElementById('devName').value = '';
             document.getElementById('devUrl').value = '';
             document.getElementById('devKey').value = '';
@@ -269,9 +142,7 @@
 
             fetch(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: formData
             })
             .then(response => response.json())
@@ -287,22 +158,18 @@
             .catch(error => {
                 statusDiv.style.color = "#f87171";
                 statusDiv.innerText = "✖ Errore di rete/connessione";
-                console.error(error);
             })
             .finally(() => {
-                setTimeout(() => {
-                    btn.disabled = false;
-                }, 3000);
+                setTimeout(() => { btn.disabled = false; }, 3000);
             });
         }
 
         function eliminaDispositivo(index) {
-            if (confirm("Sei sicuro di voler eliminare questo dispositivo?")) {
-                let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-                dispositivi.splice(index, 1);
-                localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
-                caricaDispositivi();
-            }
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+            // Rimuove l'elemento senza chiedere conferme pop-up che potrebbero essere bloccate dal browser
+            dispositivi.splice(index, 1);
+            localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+            caricaDispositivi();
         }
     </script>
 </body>
