@@ -10,7 +10,11 @@
         .container { max-width: 480px; width: 100%; }
         h1 { text-align: center; color: #f8fafc; font-size: 22px; margin-bottom: 20px; }
         h2 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 0; }
-        .house-title { font-size: 18px; color: #f59e0b; margin: 20px 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .house-header { margin: 20px 0 10px 0; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        .house-title { font-size: 18px; color: #f59e0b; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .house-address { font-size: 13px; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+        .house-address a { color: #38bdf8; text-decoration: none; }
+        .house-address a:hover { text-decoration: underline; }
         .card { background-color: #1e293b; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); }
         label { display: block; font-size: 12px; margin-bottom: 4px; color: #94a3b8; text-transform: uppercase; }
         input, select { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
@@ -39,11 +43,13 @@
     <div class="container">
         <h1 id="pageTitle">Controllo Shelly Remote</h1>
 
+        <!-- VISTA OSPITE -->
         <div id="guestView" class="card" style="display: none;">
-            <h2 id="guestHouseName">I tuoi Comandi</h2>
+            <div id="guestHouseHeader"></div>
             <div id="guestDevicesList"></div>
         </div>
 
+        <!-- VISTA AMMINISTRATORE -->
         <div id="adminView">
             <div class="card">
                 <h2>Le Tue Case e Dispositivi</h2>
@@ -59,6 +65,9 @@
                 <div id="newHouseContainer" style="display: none;">
                     <label>Nome Nuova Casa</label>
                     <input type="text" id="devNewHouse" placeholder="es. Villa Mare, Appartamento 2">
+                    
+                    <label>Indirizzo della Casa</label>
+                    <input type="text" id="devHouseAddress" placeholder="es. Via Roma 123, Milano">
                 </div>
 
                 <label>Nome Pulsante / Comando</label>
@@ -97,7 +106,7 @@
             const houseDataParam = urlParams.get('houseData');
 
             if (houseDataParam) {
-                // MODALITÀ OSPITE: Decodifica da Base64
+                // MODALITÀ OSPITE
                 try {
                     const jsonString = decodeURIComponent(escape(atob(houseDataParam)));
                     const houseObj = JSON.parse(jsonString);
@@ -105,36 +114,22 @@
                     document.getElementById('adminView').style.display = 'none';
                     document.getElementById('guestView').style.display = 'block';
                     document.getElementById('pageTitle').innerText = houseObj.house;
-                    document.getElementById('guestHouseName').innerText = "Comandi disponibili:";
+
+                    const addressHtml = houseObj.address 
+                        ? `<div class="house-address">📍 <a href="https://maps.google.com/?q=${encodeURIComponent(houseObj.address)}" target="_blank">${houseObj.address}</a></div>` 
+                        : '';
+
+                    document.getElementById('guestHouseHeader').innerHTML = `
+                        <div class="house-header">
+                            <div class="house-title">🏠 ${houseObj.house}</div>
+                            ${addressHtml}
+                        </div>
+                        <h2 style="margin-top: 15px;">Comandi disponibili:</h2>
+                    `;
 
                     const container = document.getElementById('guestDevicesList');
                     houseObj.devices.forEach((dev, idx) => {
-                        const item = document.createElement('div');
-                        item.className = 'device-item';
-
-                        if (dev.type === 'pin') {
-                            item.innerHTML = `
-                                <div class="device-header">
-                                    <span class="device-title">🔑 ${dev.name}</span>
-                                </div>
-                                <div class="pin-display" id="pin-display-${idx}">••••</div>
-                                <div class="keypad">
-                                    ${[1,2,3,4,5,6,7,8,9,'C',0,'OK'].map(val => `
-                                        <button class="keypad-btn" onclick="gestisciPinInput('${val}', ${idx}, '${dev.url}', '${dev.id}', '${dev.key}', '${dev.pin}')">${val}</button>
-                                    `).join('')}
-                                </div>
-                                <div class="status-msg" id="gstatus-${idx}">Inserisci il PIN per aprire</div>
-                            `;
-                        } else {
-                            item.innerHTML = `
-                                <div class="device-header">
-                                    <span class="device-title">🏢 ${dev.name}</span>
-                                </div>
-                                <button class="btn btn-trigger" id="gbtn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'gbtn-${idx}', 'gstatus-${idx}')">ATTIVA PORTONE</button>
-                                <div class="status-msg" id="gstatus-${idx}">Premi per aprire</div>
-                            `;
-                        }
-                        container.appendChild(item);
+                        container.appendChild(generaElementoDispositivo(dev, idx, true));
                     });
                 } catch (e) {
                     alert("Link ospite non valido o corrotto.");
@@ -144,10 +139,46 @@
             }
         });
 
-        function gestisciPinInput(val, index, url, id, key, correctPin) {
+        // Funzione centralizzata per generare l'HTML di un dispositivo (PIN o Bottone)
+        function generaElementoDispositivo(dev, idx, isGuest = false) {
+            const item = document.createElement('div');
+            item.className = 'device-item';
+            const statusId = isGuest ? `gstatus-${idx}` : `status-${idx}`;
+
+            if (dev.type === 'pin') {
+                item.innerHTML = `
+                    <div class="device-header">
+                        <span class="device-title">🔑 ${dev.name}</span>
+                        ${!isGuest ? `<button class="btn-delete" onclick="eliminaDispositivo(${idx})">Elimina</button>` : ''}
+                    </div>
+                    <div class="pin-display" id="pin-display-${idx}">••••</div>
+                    <div class="keypad">
+                        ${[1,2,3,4,5,6,7,8,9,'C',0,'OK'].map(val => `
+                            <button class="keypad-btn" onclick="gestisciPinInput('${val}', ${idx}, '${dev.url}', '${dev.id}', '${dev.key}', '${dev.pin}', '${statusId}')">${val}</button>
+                        `).join('')}
+                    </div>
+                    <div class="status-msg" id="${statusId}">Inserisci il PIN per aprire</div>
+                `;
+            } else {
+                const btnId = isGuest ? `gbtn-${idx}` : `btn-${idx}`;
+                item.innerHTML = `
+                    <div class="device-header">
+                        <span class="device-title">🏢 ${dev.name}</span>
+                        ${!isGuest ? `<button class="btn-delete" onclick="eliminaDispositivo(${idx})">Elimina</button>` : ''}
+                    </div>
+                    <button class="btn btn-trigger" id="${btnId}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', '${btnId}', '${statusId}')">
+                        ${isGuest ? 'ATTIVA PORTONE' : 'TEST ATTIVAZIONE'}
+                    </button>
+                    <div class="status-msg" id="${statusId}">Premi per attivare</div>
+                `;
+            }
+            return item;
+        }
+
+        function gestisciPinInput(val, index, url, id, key, correctPin, statusId) {
             if (!currentPins[index]) currentPins[index] = "";
             const display = document.getElementById(`pin-display-${index}`);
-            const statusDiv = document.getElementById(`gstatus-${index}`);
+            const statusDiv = document.getElementById(statusId);
 
             if (val === 'C') {
                 currentPins[index] = "";
@@ -155,7 +186,7 @@
                 statusDiv.innerText = "Inserisci il PIN per aprire";
             } else if (val === 'OK') {
                 if (currentPins[index] === correctPin) {
-                    inviaComando(url, id, key, null, `gstatus-${index}`);
+                    inviaComando(url, id, key, null, statusId);
                 } else {
                     statusDiv.style.color = "#f87171";
                     statusDiv.innerText = "✖ PIN Errato!";
@@ -233,27 +264,23 @@
 
             for (const houseName in caseGroup) {
                 const houseDiv = document.createElement('div');
+                const houseAddress = caseGroup[houseName][0].address || "";
+                const addressHtml = houseAddress 
+                    ? `<div class="house-address">📍 <a href="https://maps.google.com/?q=${encodeURIComponent(houseAddress)}" target="_blank">${houseAddress}</a></div>` 
+                    : '';
+
                 houseDiv.innerHTML = `
-                    <div class="house-title">
-                        <span>🏠 ${houseName}</span>
-                        <button class="btn-house-share" onclick="copiaLinkCasa('${houseName}')">🔗 Copia Link Casa</button>
+                    <div class="house-header">
+                        <div class="house-title">
+                            <span>🏠 ${houseName}</span>
+                            <button class="btn-house-share" onclick="copiaLinkCasa('${houseName}')">🔗 Copia Link Casa</button>
+                        </div>
+                        ${addressHtml}
                     </div>
                 `;
 
                 caseGroup[houseName].forEach((dev) => {
-                    const idx = dev.originalIndex;
-                    const item = document.createElement('div');
-                    item.className = 'device-item';
-                    const icon = dev.type === 'pin' ? '🔑 (PIN)' : '🏢 (Pulsante)';
-                    item.innerHTML = `
-                        <div class="device-header">
-                            <span class="device-title">${icon} ${dev.name}</span>
-                            <button class="btn-delete" onclick="eliminaDispositivo(${idx})">Elimina</button>
-                        </div>
-                        <button class="btn btn-trigger" id="btn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'btn-${idx}', 'status-${idx}')">APRI</button>
-                        <div class="status-msg" id="status-${idx}">Premi per testare</div>
-                    `;
-                    houseDiv.appendChild(item);
+                    houseDiv.appendChild(generaElementoDispositivo(dev, dev.originalIndex, false));
                 });
 
                 container.appendChild(houseDiv);
@@ -296,16 +323,17 @@
 
         function copiaLinkCasa(houseName) {
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            const houseDevices = dispositivi
-                .filter(d => (d.house || "Principale") === houseName)
-                .map(d => ({ name: d.name, type: d.type, pin: d.pin, url: d.url, key: d.key, id: d.id }));
+            const filteredDevices = dispositivi.filter(d => (d.house || "Principale") === houseName);
+            
+            const houseAddress = filteredDevices.length > 0 ? (filteredDevices[0].address || "") : "";
+            const houseDevices = filteredDevices.map(d => ({ name: d.name, type: d.type, pin: d.pin, url: d.url, key: d.key, id: d.id }));
 
             const payload = {
                 house: houseName,
+                address: houseAddress,
                 devices: houseDevices
             };
 
-            // Codifica l'intero payload JSON in Base64 per nascondere i parametri nell'URL
             const jsonString = JSON.stringify(payload);
             const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
 
@@ -313,7 +341,7 @@
             const fullUrl = `${baseUrl}?houseData=${base64Data}`;
 
             navigator.clipboard.writeText(fullUrl).then(() => {
-                alert(`✔ Link per "${houseName}" copiato negli appunti!\n\nI dati sensibili sono stati codificati nell'URL.`);
+                alert(`✔ Link per "${houseName}" copiato negli appunti!`);
             }).catch(() => {
                 prompt("Copia manualmente il link:", fullUrl);
             });
@@ -321,7 +349,18 @@
 
         function salvaDispositivo() {
             const select = document.getElementById('devHouseSelect');
-            let house = select.value === "NEW_HOUSE" ? document.getElementById('devNewHouse').value.trim() : select.value;
+            let house = "";
+            let address = "";
+
+            if (select.value === "NEW_HOUSE") {
+                house = document.getElementById('devNewHouse').value.trim();
+                address = document.getElementById('devHouseAddress').value.trim();
+            } else {
+                house = select.value;
+                let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+                const devEsistente = dispositivi.find(d => d.house === house);
+                address = devEsistente ? (devEsistente.address || "") : "";
+            }
 
             const name = document.getElementById('devName').value.trim();
             const type = document.getElementById('devType').value;
@@ -341,16 +380,20 @@
             }
 
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            dispositivi.push({ house, name, type, pin, url, key, id });
+            dispositivi.push({ house, address, name, type, pin, url, key, id });
 
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
 
+            // Reset Form
             document.getElementById('devNewHouse').value = '';
+            document.getElementById('devHouseAddress').value = '';
             document.getElementById('devName').value = '';
             document.getElementById('devPin').value = '';
             document.getElementById('devUrl').value = '';
             document.getElementById('devKey').value = '';
             document.getElementById('devId').value = '';
+            document.getElementById('devType').value = 'button';
+            gestisciTipoAccesso();
 
             caricaDispositiviAdmin();
         }
