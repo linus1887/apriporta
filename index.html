@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controllo Shelly Multi-Casa</title>
+    <title>Controllo Shelly Remote</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #0f172a; color: #ffffff; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
@@ -11,37 +11,37 @@
         h1 { text-align: center; color: #f8fafc; font-size: 22px; margin-bottom: 20px; }
         h2 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 0; }
         
-        /* STILI CARTELLE / ACCORDION */
         .folder-card { background-color: #1e293b; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; overflow: hidden; }
-        .folder-header { background-color: #334155; padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .folder-header { background-color: #334155; padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .folder-header:hover { background-color: #475569; }
         .folder-title { font-size: 16px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 8px; }
         .folder-content { padding: 16px; display: none; }
         .folder-card.open .folder-content { display: block; }
         .folder-card.open .folder-header { background-color: #1e293b; border-bottom: 1px solid #334155; }
         
-        .house-address { font-size: 13px; color: #94a3b8; margin-bottom: 15px; display: flex; align-items: center; gap: 4px; }
+        .house-address { font-size: 13px; color: #94a3b8; margin-bottom: 10px; display: flex; align-items: center; gap: 4px; }
         .house-address a { color: #38bdf8; text-decoration: none; }
         
         .card { background-color: #1e293b; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); }
         label { display: block; font-size: 12px; margin-bottom: 4px; color: #94a3b8; text-transform: uppercase; }
         input, select { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
         input:focus, select:focus { outline: none; border-color: #38bdf8; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.2s ease; }
+        
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; }
         .btn-add { background-color: #10b981; color: white; margin-top: 5px; }
+        .btn-edit { background-color: #f59e0b; color: white; border: none; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; }
+        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; }
+        .btn-house-share { background-color: #8b5cf6; color: white; border: none; padding: 8px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; width: 100%; }
+        
         .device-item { background-color: #0f172a; padding: 16px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; }
         .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .device-title { font-weight: bold; font-size: 16px; color: #f1f5f9; }
-        .btn-trigger { background-color: #2563eb; color: white; padding: 14px; font-size: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
-        .btn-trigger:active { transform: scale(0.96); background-color: #1d4ed8; }
-        .btn-trigger:disabled { background-color: #64748b; cursor: not-allowed; box-shadow: none; }
-        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; }
-        .btn-house-share { background-color: #8b5cf6; color: white; border: none; padding: 8px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; width: 100%; }
+        .btn-trigger { background-color: #2563eb; color: white; padding: 14px; font-size: 16px; }
+        .btn-trigger:disabled { background-color: #64748b; cursor: not-allowed; }
         .status-msg { font-size: 13px; text-align: center; margin-top: 8px; min-height: 18px; color: #94a3b8; }
         
-        /* STILI TASTIERINO PIN */
         .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .keypad-btn { background-color: #334155; color: white; font-size: 20px; padding: 15px; border-radius: 8px; border: none; cursor: pointer; text-align: center; font-weight: bold; }
+        .keypad-btn { background-color: #334155; color: white; font-size: 20px; padding: 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
         .keypad-btn:active { background-color: #38bdf8; }
         .pin-display { text-align: center; font-size: 24px; letter-spacing: 8px; margin-bottom: 10px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; min-height: 48px; }
     </style>
@@ -64,8 +64,9 @@
                 <div id="housesContainer"></div>
             </div>
 
-            <div class="card">
-                <h2>Aggiungi Nuovo Dispositivo</h2>
+            <div class="card" id="formCard">
+                <h2 id="formTitle">Aggiungi Nuovo Dispositivo</h2>
+                <input type="hidden" id="editingDevId" value="">
                 
                 <label>Seleziona Casa / Cartella</label>
                 <select id="devHouseSelect" onchange="gestisciSelezioneCasa()"></select>
@@ -101,7 +102,8 @@
                 <label>Device ID</label>
                 <input type="text" id="devId" placeholder="Es. 1c6920095acc">
 
-                <button class="btn btn-add" onclick="salvaDispositivo()">+ Salva Dispositivo</button>
+                <button class="btn btn-add" id="btnSave" onclick="salvaDispositivo()">+ Salva Dispositivo</button>
+                <button class="btn" id="btnCancel" onclick="resetForm()" style="display:none; background-color: #64748b; margin-top: 8px;">Annulla Modifica</button>
             </div>
         </div>
     </div>
@@ -111,15 +113,18 @@
 
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const houseDataParam = urlParams.get('houseData');
+            const houseIdParam = urlParams.get('houseId');
 
-            if (houseDataParam) {
-                try {
-                    const jsonString = decodeURIComponent(escape(atob(houseDataParam)));
-                    const houseObj = JSON.parse(jsonString);
-                    
-                    document.getElementById('adminView').style.display = 'none';
-                    document.getElementById('guestView').style.display = 'block';
+            if (houseIdParam) {
+                // MODALITÀ OSPITE BASATA SU ID PERMANENTE
+                document.getElementById('adminView').style.display = 'none';
+                document.getElementById('guestView').style.display = 'block';
+
+                let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+                let houseDevices = dispositivi.filter(d => d.houseId === houseIdParam);
+
+                if (houseDevices.length > 0) {
+                    const houseObj = houseDevices[0];
                     document.getElementById('pageTitle').innerText = houseObj.house;
 
                     const addressHtml = houseObj.address 
@@ -134,11 +139,12 @@
                     `;
 
                     const container = document.getElementById('guestDevicesList');
-                    houseObj.devices.forEach((dev, idx) => {
+                    container.innerHTML = '';
+                    houseDevices.forEach((dev, idx) => {
                         container.appendChild(generaElementoDispositivo(dev, idx, true));
                     });
-                } catch (e) {
-                    alert("Link ospite non valido o corrotto.");
+                } else {
+                    document.getElementById('guestView').innerHTML = '<p style="text-align:center;">Appartamento non trovato o rimosso.</p>';
                 }
             } else {
                 caricaDispositiviAdmin();
@@ -150,11 +156,18 @@
             item.className = 'device-item';
             const statusId = isGuest ? `gstatus-${idx}` : `status-${idx}`;
 
+            const actionButtons = !isGuest ? `
+                <div>
+                    <button class="btn-edit" onclick="caricaInModifica('${dev.idInternal}')">✏️ Edit</button>
+                    <button class="btn-delete" onclick="eliminaDispositivo('${dev.idInternal}')">Elimina</button>
+                </div>
+            ` : '';
+
             if (dev.type === 'pin') {
                 item.innerHTML = `
                     <div class="device-header">
                         <span class="device-title">🔑 ${dev.name}</span>
-                        ${!isGuest ? `<button class="btn-delete" onclick="eliminaDispositivo(${idx})">Elimina</button>` : ''}
+                        ${actionButtons}
                     </div>
                     <div class="pin-display" id="pin-display-${idx}">••••</div>
                     <div class="keypad">
@@ -169,7 +182,7 @@
                 item.innerHTML = `
                     <div class="device-header">
                         <span class="device-title">🏢 ${dev.name}</span>
-                        ${!isGuest ? `<button class="btn-delete" onclick="eliminaDispositivo(${idx})">Elimina</button>` : ''}
+                        ${actionButtons}
                     </div>
                     <button class="btn btn-trigger" id="${btnId}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', '${btnId}', '${statusId}')">
                         ${isGuest ? 'ATTIVA PORTONE' : 'TEST ATTIVAZIONE'}
@@ -259,16 +272,19 @@
             }
 
             const caseGroup = {};
-            dispositivi.forEach((dev, originalIndex) => {
+            dispositivi.forEach((dev) => {
                 const houseName = dev.house || "Principale";
                 if (!caseGroup[houseName]) caseGroup[houseName] = [];
-                caseGroup[houseName].push({ ...dev, originalIndex });
+                caseGroup[houseName].push(dev);
             });
 
             container.innerHTML = '';
 
             for (const houseName in caseGroup) {
-                const houseAddress = caseGroup[houseName][0].address || "";
+                const houseObj = caseGroup[houseName][0];
+                const houseAddress = houseObj.address || "";
+                const houseId = houseObj.houseId;
+
                 const addressHtml = houseAddress 
                     ? `<div class="house-address">📍 <a href="https://maps.google.com/?q=${encodeURIComponent(houseAddress)}" target="_blank">${houseAddress}</a></div>` 
                     : '';
@@ -282,14 +298,14 @@
                     </div>
                     <div class="folder-content">
                         ${addressHtml}
-                        <button class="btn-house-share" onclick="copiaLinkCasa('${houseName}')">🔗 Copia Link Ospite</button>
-                        <div id="dev-list-${houseName}"></div>
+                        <button class="btn-house-share" onclick="copiaLinkCasa('${houseId}')">🔗 Copia Link Permanentemente Valido per Ospite</button>
+                        <div id="dev-list-${houseId}"></div>
                     </div>
                 `;
 
-                const devListContainer = folderDiv.querySelector(`#dev-list-${houseName}`);
-                caseGroup[houseName].forEach((dev) => {
-                    devListContainer.appendChild(generaElementoDispositivo(dev, dev.originalIndex, false));
+                const devListContainer = folderDiv.querySelector(`#dev-list-${houseId}`);
+                caseGroup[houseName].forEach((dev, idx) => {
+                    devListContainer.appendChild(generaElementoDispositivo(dev, idx, false));
                 });
 
                 container.appendChild(folderDiv);
@@ -328,40 +344,35 @@
             pinContainer.style.display = type === 'pin' ? 'block' : 'none';
         }
 
-        function copiaLinkCasa(houseName) {
-            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            const filteredDevices = dispositivi.filter(d => (d.house || "Principale") === houseName);
-            
-            const houseAddress = filteredDevices.length > 0 ? (filteredDevices[0].address || "") : "";
-            const houseDevices = filteredDevices.map(d => ({ name: d.name, type: d.type, pin: d.pin, url: d.url, key: d.key, id: d.id }));
-
-            const payload = { house: houseName, address: houseAddress, devices: houseDevices };
-            const jsonString = JSON.stringify(payload);
-            const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
-
+        function copiaLinkCasa(houseId) {
             const baseUrl = window.location.href.split('?')[0];
-            const fullUrl = `${baseUrl}?houseData=${base64Data}`;
+            const fullUrl = `${baseUrl}?houseId=${houseId}`;
 
             navigator.clipboard.writeText(fullUrl).then(() => {
-                alert(`✔ Link cartella "${houseName}" copiato negli appunti!`);
+                alert(`✔ Link PERMANENTE copiato negli appunti! Se modifichi le impostazioni dell'appartamento, questo link si aggiornerà automaticamente.`);
             }).catch(() => {
-                prompt("Copia manualmente il link:", fullUrl);
+                prompt("Copia manualmente il link permanente:", fullUrl);
             });
         }
 
         function salvaDispositivo() {
+            const editingId = document.getElementById('editingDevId').value;
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+
             const select = document.getElementById('devHouseSelect');
             let house = "";
             let address = "";
+            let houseId = "";
 
             if (select.value === "NEW_HOUSE") {
                 house = document.getElementById('devNewHouse').value.trim();
                 address = document.getElementById('devHouseAddress').value.trim();
+                houseId = 'house_' + Date.now();
             } else {
                 house = select.value;
-                let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
                 const devEsistente = dispositivi.find(d => d.house === house);
                 address = devEsistente ? (devEsistente.address || "") : "";
+                houseId = devEsistente ? devEsistente.houseId : ('house_' + Date.now());
             }
 
             const name = document.getElementById('devName').value.trim();
@@ -381,12 +392,70 @@
                 return;
             }
 
-            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            dispositivi.push({ house, address, name, type, pin, url, key, id });
+            if (editingId) {
+                // MODIFICA DISPOSITIVO ESISTENTE
+                const index = dispositivi.findIndex(d => d.idInternal === editingId);
+                if (index !== -1) {
+                    dispositivi[index] = { 
+                        ...dispositivi[index], 
+                        house, 
+                        address, 
+                        name, 
+                        type, 
+                        pin, 
+                        url, 
+                        key, 
+                        id 
+                    };
+                    
+                    // Aggiorna anche l'indirizzo per gli altri dispositivi della stessa casa
+                    dispositivi.forEach(d => {
+                        if(d.houseId === houseId) d.address = address;
+                    });
+                }
+            } else {
+                // NUOVO DISPOSITIVO
+                const idInternal = 'dev_' + Date.now();
+                dispositivi.push({ idInternal, houseId, house, address, name, type, pin, url, key, id });
+            }
 
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+            resetForm();
+            caricaDispositiviAdmin();
+        }
 
-            // Reset Form
+        function caricaInModifica(idInternal) {
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+            const dev = dispositivi.find(d => d.idInternal === idInternal);
+
+            if (!dev) return;
+
+            document.getElementById('editingDevId').value = dev.idInternal;
+            document.getElementById('formTitle').innerText = "✏️ Modifica Dispositivo";
+            document.getElementById('btnSave').innerText = "Salva Modifiche";
+            document.getElementById('btnCancel').style.display = "block";
+
+            document.getElementById('devHouseSelect').value = dev.house;
+            gestisciSelezioneCasa();
+
+            document.getElementById('devName').value = dev.name;
+            document.getElementById('devType').value = dev.type;
+            gestisciTipoAccesso();
+
+            document.getElementById('devPin').value = dev.pin || '';
+            document.getElementById('devUrl').value = dev.url;
+            document.getElementById('devKey').value = dev.key;
+            document.getElementById('devId').value = dev.id;
+
+            document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('editingDevId').value = '';
+            document.getElementById('formTitle').innerText = "Aggiungi Nuovo Dispositivo";
+            document.getElementById('btnSave').innerText = "+ Salva Dispositivo";
+            document.getElementById('btnCancel').style.display = "none";
+
             document.getElementById('devNewHouse').value = '';
             document.getElementById('devHouseAddress').value = '';
             document.getElementById('devName').value = '';
@@ -396,13 +465,12 @@
             document.getElementById('devId').value = '';
             document.getElementById('devType').value = 'button';
             gestisciTipoAccesso();
-
-            caricaDispositiviAdmin();
         }
 
-        function eliminaDispositivo(index) {
+        function eliminaDispositivo(idInternal) {
+            if (!confirm("Sei sicuro di voler eliminare questo dispositivo?")) return;
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            dispositivi.splice(index, 1);
+            dispositivi = dispositivi.filter(d => d.idInternal !== idInternal);
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
             caricaDispositiviAdmin();
         }
