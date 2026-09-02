@@ -3,22 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attiva Shelly da Remoto</title>
+    <title>Apriporta Shelly</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             background-color: #0f172a;
             color: #ffffff;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            background-color: #1e293b;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 20px;
+            margin-bottom: 25px;
+            color: #e2e8f0;
         }
         .btn {
-            padding: 20px 40px;
-            font-size: 22px;
+            width: 100%;
+            padding: 20px;
+            font-size: 20px;
             font-weight: bold;
             color: white;
             background-color: #2563eb;
@@ -27,39 +46,62 @@
             cursor: pointer;
             box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
             transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
         }
         .btn:active {
-            transform: scale(0.95);
+            transform: scale(0.96);
+            background-color: #1d4ed8;
+        }
+        .btn:disabled {
+            background-color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
         }
         #status {
             margin-top: 20px;
-            font-size: 16px;
+            font-size: 14px;
             color: #94a3b8;
+            min-height: 20px;
         }
     </style>
 </head>
 <body>
 
-    <button class="btn" onclick="attivaRelay()">Attiva Dispositivo</button>
-    <div id="status"></div>
+    <div class="container">
+        <h1>Controllo Shelly Remote</h1>
+        <button id="mainBtn" class="btn" onclick="attivaRelay()">Attiva Relè</button>
+        <div id="status">Premia il pulsante per attivare</div>
+    </div>
 
     <script>
+        // =========================================================
+        // INSERISCI QUI I TRE DATI CHE HAI RECUPERATO:
+        // =========================================================
+        
+        const serverUrl = "https://shelly-278-eu.shelly.cloud";   // Es. https://shelly-42-eu.shelly.cloud
+        const authKey   = "MjhmYzlhdWlkD629E35BB1288E526F6E5EA6AB0D7626360B4856675F8E98F43BE86A87BEC127B912184F320B1224";    // Es. M2YxNDI3aW5...
+        const deviceId  = "1c6920095acc";    // Es. 483dda40a1b2
+
+        // =========================================================
+
         function attivaRelay() {
+            const btn = document.getElementById('mainBtn');
             const statusDiv = document.getElementById('status');
+
+            // Disabilita temporaneamente il pulsante per evitare doppie pressioni
+            btn.disabled = true;
+            statusDiv.style.color = "#38bdf8";
             statusDiv.innerText = "Invio comando in corso...";
 
-            // MODIFICA QUESTI DATI CON I TUOI
-            const serverUrl = "https://shelly-XX-eu.shelly.cloud"; // Es. https://shelly-42-eu.shelly.cloud
-            const authKey = "IL_TUO_AUTH_KEY_HERE";
-            const deviceId = "IL_TUO_DEVICE_ID_HERE";
-
-            const endpoint = `${serverUrl}/device/relay/control`;
+            // Pulizia URL se contiene uno slash finale accidentale
+            const cleanUrl = serverUrl.replace(/\/$/, "");
+            const endpoint = `${cleanUrl}/device/relay/control`;
 
             const formData = new URLSearchParams();
             formData.append('id', deviceId);
             formData.append('auth_key', authKey);
-            formData.append('channel', '0'); // Canale del relè (solitamente 0)
-            formData.append('turn', 'on');  // 'on', 'off' o 'toggle'
+            formData.append('channel', '0'); // Canale del relè
+            formData.append('turn', 'on');  // Invia il comando di accensione
 
             fetch(endpoint, {
                 method: 'POST',
@@ -71,13 +113,23 @@
             .then(response => response.json())
             .then(data => {
                 if (data.isok) {
-                    statusDiv.innerText = "Comando inviato con successo!";
+                    statusDiv.style.color = "#4ade80";
+                    statusDiv.innerText = "✔ Comando inviato con successo!";
                 } else {
-                    statusDiv.innerText = "Errore: " + JSON.stringify(data.errors);
+                    statusDiv.style.color = "#f87171";
+                    statusDiv.innerText = "✖ Errore: " + JSON.stringify(data.errors);
                 }
             })
             .catch(error => {
-                statusDiv.innerText = "Errore di connessione: " + error;
+                statusDiv.style.color = "#f87171";
+                statusDiv.innerText = "✖ Errore di rete/connessione";
+                console.error(error);
+            })
+            .finally(() => {
+                // Riabilita il pulsante dopo 3 secondi
+                setTimeout(() => {
+                    btn.disabled = false;
+                }, 3000);
             });
         }
     </script>
