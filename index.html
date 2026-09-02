@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #0f172a; color: #ffffff; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { max-width: 680px; width: 100%; } /* Allargata la vista generale da 480px a 680px */
+        .container { max-width: 680px; width: 100%; }
         h1 { text-align: center; color: #f8fafc; font-size: 22px; margin-bottom: 20px; }
         h2 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 0; }
         
@@ -131,7 +131,7 @@
                             <thead>
                                 <tr>
                                     <th style="width: 25%;">Nome Ospite</th>
-                                    <th style="width: 20%;">PIN <span class="req">*</span></th>
+                                    <th style="width: 20%;">PIN (4 Cifre) <span class="req">*</span></th>
                                     <th style="width: 10%;">Perm.</th>
                                     <th style="width: 20%;">Dal</th>
                                     <th style="width: 20%;">Al</th>
@@ -310,7 +310,7 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><input type="text" class="pin-guest" placeholder="Nome" value="${guest}"></td>
-                <td><input type="text" class="pin-val" placeholder="PIN" maxlength="6" value="${pin}"></td>
+                <td><input type="text" class="pin-val" placeholder="4 cifre" maxlength="4" pattern="[0-9]*" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" value="${pin}"></td>
                 <td><input type="checkbox" class="pin-perm" ${isPermanent ? 'checked' : ''} onchange="gestisciStatoPermanente(this)"></td>
                 <td><input type="date" class="pin-start" value="${startDate}" ${isPermanent ? 'disabled' : ''}></td>
                 <td><input type="date" class="pin-end" value="${endDate}" ${isPermanent ? 'disabled' : ''}></td>
@@ -342,13 +342,11 @@
             const startDate = tr.querySelector('.pin-start').value;
             const endDate = tr.querySelector('.pin-end').value;
 
-            // Se tutti i campi (Nome, PIN, Dal e Al) sono vuoti, rimuovi direttamente senza chiedere conferma
             if (!guestName && !pinVal && !startDate && !endDate) {
                 tr.remove();
                 return;
             }
 
-            // Altrimenti chiedi conferma mostrandone i dettagli
             let messaggio = `Sei sicuro di voler eliminare il PIN${guestName ? ' di "' + guestName + '"' : ''}${pinVal ? ' (' + pinVal + ')' : ''}?`;
             if (confirm(messaggio)) {
                 tr.remove();
@@ -358,6 +356,8 @@
         function ottieniListaPinDaTabella() {
             const righe = document.querySelectorAll('#pinTableBody tr');
             const pinList = [];
+            let error = false;
+
             righe.forEach(tr => {
                 const guest = tr.querySelector('.pin-guest').value.trim();
                 const pin = tr.querySelector('.pin-val').value.trim();
@@ -366,9 +366,19 @@
                 const endDate = tr.querySelector('.pin-end').value;
 
                 if (pin) {
-                    pinList.push({ guest, pin, isPermanent, startDate, endDate });
+                    if (!/^\d{4}$/.test(pin)) {
+                        error = true;
+                    } else {
+                        pinList.push({ guest, pin, isPermanent, startDate, endDate });
+                    }
                 }
             });
+
+            if (error) {
+                alert("Tutti i PIN inseriti devono essere composti da esattamente 4 cifre numeriche!");
+                return null;
+            }
+
             return pinList;
         }
 
@@ -439,7 +449,7 @@
                 currentPins[index] = "";
                 aggiornaDisplayPin(index);
             } else {
-                if (currentPins[index].length < 6) {
+                if (currentPins[index].length < 4) {
                     currentPins[index] += val;
                     aggiornaDisplayPin(index);
                 }
@@ -657,6 +667,11 @@
             const name = document.getElementById('devName').value.trim();
             const type = document.getElementById('devType').value;
             const pinList = type === 'pin' ? ottieniListaPinDaTabella() : [];
+            
+            if (type === 'pin' && pinList === null) {
+                return;
+            }
+
             const url  = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
             const key  = document.getElementById('devKey').value.trim();
             const id   = document.getElementById('devId').value.trim();
