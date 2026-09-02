@@ -111,7 +111,40 @@
     <script>
         const currentPins = {};
 
+        // Normalizza e migra i vecchi dati se sprovvisti di ID interni
+        function migraDatiEsistenti() {
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+            let modificato = false;
+            
+            const houseMap = {};
+
+            dispositivi.forEach((dev, index) => {
+                const hName = dev.house || "Principale";
+                
+                if (!dev.idInternal) {
+                    dev.idInternal = 'dev_' + Date.now() + '_' + index;
+                    modificato = true;
+                }
+
+                if (!dev.houseId) {
+                    if (!houseMap[hName]) {
+                        houseMap[hName] = 'house_' + Math.random().toString(36).substr(2, 9);
+                    }
+                    dev.houseId = houseMap[hName];
+                    modificato = true;
+                } else {
+                    houseMap[hName] = dev.houseId;
+                }
+            });
+
+            if (modificato) {
+                localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
+            migraDatiEsistenti();
+
             const urlParams = new URLSearchParams(window.location.search);
             const houseIdParam = urlParams.get('houseId');
 
@@ -298,7 +331,7 @@
                     </div>
                     <div class="folder-content">
                         ${addressHtml}
-                        <button class="btn-house-share" onclick="copiaLinkCasa('${houseId}')">🔗 Copia Link Permanentemente Valido per Ospite</button>
+                        <button class="btn-house-share" onclick="copiaLinkCasa('${houseId}')">🔗 Copia Link Ospite</button>
                         <div id="dev-list-${houseId}"></div>
                     </div>
                 `;
@@ -345,11 +378,16 @@
         }
 
         function copiaLinkCasa(houseId) {
+            if(!houseId || houseId === 'undefined') {
+                alert("Errore nell'ID della casa. Prova a salvare di nuovo la casa.");
+                return;
+            }
+
             const baseUrl = window.location.href.split('?')[0];
             const fullUrl = `${baseUrl}?houseId=${houseId}`;
 
             navigator.clipboard.writeText(fullUrl).then(() => {
-                alert(`✔ Link PERMANENTE copiato negli appunti! Se modifichi le impostazioni dell'appartamento, questo link si aggiornerà automaticamente.`);
+                alert(`✔ Link PERMANENTE copiato negli appunti!\n\nLink: ${fullUrl}`);
             }).catch(() => {
                 prompt("Copia manualmente il link permanente:", fullUrl);
             });
@@ -372,7 +410,7 @@
                 house = select.value;
                 const devEsistente = dispositivi.find(d => d.house === house);
                 address = devEsistente ? (devEsistente.address || "") : "";
-                houseId = devEsistente ? devEsistente.houseId : ('house_' + Date.now());
+                houseId = devEsistente && devEsistente.houseId ? devEsistente.houseId : ('house_' + Date.now());
             }
 
             const name = document.getElementById('devName').value.trim();
@@ -393,13 +431,13 @@
             }
 
             if (editingId) {
-                // MODIFICA DISPOSITIVO ESISTENTE
                 const index = dispositivi.findIndex(d => d.idInternal === editingId);
                 if (index !== -1) {
                     dispositivi[index] = { 
                         ...dispositivi[index], 
                         house, 
                         address, 
+                        houseId,
                         name, 
                         type, 
                         pin, 
@@ -408,13 +446,14 @@
                         id 
                     };
                     
-                    // Aggiorna anche l'indirizzo per gli altri dispositivi della stessa casa
                     dispositivi.forEach(d => {
-                        if(d.houseId === houseId) d.address = address;
+                        if(d.house === house) {
+                            d.address = address;
+                            d.houseId = houseId;
+                        }
                     });
                 }
             } else {
-                // NUOVO DISPOSITIVO
                 const idInternal = 'dev_' + Date.now();
                 dispositivi.push({ idInternal, houseId, house, address, name, type, pin, url, key, id });
             }
