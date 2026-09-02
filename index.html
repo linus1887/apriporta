@@ -103,14 +103,14 @@
 
                 <div id="newHouseContainer" style="display: none;">
                     <label>Nome Nuova Casa</label>
-                    <input type="text" id="devNewHouse" placeholder="es. Appartamento Mare">
+                    <input type="text" id="devNewHouse" placeholder="es. Appartamento mare, Appartemento città">
                     
                     <label>Indirizzo della Casa</label>
                     <input type="text" id="devHouseAddress" placeholder="es. Via Roma 123, Milano">
                 </div>
 
                 <label>Nome Pulsante / Comando</label>
-                <input type="text" id="devName" placeholder="es. Portone Palazzo, Porta Appartamento">
+                <input type="text" id="devName" placeholder="es. Portone, Porta di ingresso">
 
                 <label>Tipo Accesso</label>
                 <select id="devType" onchange="gestisciTipoAccesso()">
@@ -139,13 +139,13 @@
                 </div>
 
                 <label>Server URL</label>
-                <input type="text" id="devUrl" placeholder="https://shelly-278-eu.shelly.cloud">
+                <input type="text" id="devUrl" placeholder="https://shelly-xxx-eu.shelly.cloud">
 
                 <label>Auth Key</label>
-                <input type="text" id="devKey" placeholder="La tua Cloud Auth Key">
+                <input type="text" id="devKey" placeholder="La tua Cloud Key">
 
                 <label>Device ID</label>
-                <input type="text" id="devId" placeholder="Es. 1c6920095acc">
+                <input type="text" id="devId" placeholder="Es. 1x1234567xxx">
 
                 <button class="btn btn-add" id="btnSave" onclick="salvaDispositivo()">+ Salva Dispositivo</button>
                 <button class="btn" id="btnCancel" onclick="resetForm()" style="display:none; background-color: #64748b; margin-top: 8px;">Annulla Modifica</button>
