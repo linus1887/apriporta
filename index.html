@@ -131,7 +131,7 @@
                                     <span class="device-title">🏢 ${dev.name}</span>
                                 </div>
                                 <button class="btn btn-trigger" id="gbtn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'gbtn-${idx}', 'gstatus-${idx}')">ATTIVA PORTONE</button>
-                                <div class="status-msg" id="gstatus-${idx}">Premia per attivare</div>
+                                <div class="status-msg" id="gstatus-${idx}">Premi per aprire</div>
                             `;
                         }
                         container.appendChild(item);
@@ -250,8 +250,8 @@
                             <span class="device-title">${icon} ${dev.name}</span>
                             <button class="btn-delete" onclick="eliminaDispositivo(${idx})">Elimina</button>
                         </div>
-                        <button class="btn btn-trigger" id="btn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'btn-${idx}', 'status-${idx}')">TEST ATTIVAZIONE</button>
-                        <div class="status-msg" id="status-${idx}">Premia per testare</div>
+                        <button class="btn btn-trigger" id="btn-${idx}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', 'btn-${idx}', 'status-${idx}')">APRI</button>
+                        <div class="status-msg" id="status-${idx}">Premi per testare</div>
                     `;
                     houseDiv.appendChild(item);
                 });
