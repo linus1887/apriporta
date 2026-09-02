@@ -33,7 +33,7 @@
     <div class="container">
         <h1 id="pageTitle">Controllo Shelly Remote</h1>
 
-        <!-- VISTA OSPITE (MODALITÀ CASA COMPLETA O SINGOLO BOTTONE) -->
+        <!-- VISTA OSPITE -->
         <div id="guestView" class="card" style="display: none;">
             <h2 id="guestHouseName">I tuoi Comandi</h2>
             <div id="guestDevicesList"></div>
@@ -48,8 +48,17 @@
 
             <div class="card">
                 <h2>Aggiungi Nuovo Dispositivo</h2>
-                <label>Nome Casa / Gruppo</label>
-                <input type="text" id="devHouse" placeholder="es. Casa Mare, Appartamento 1">
+                
+                <label>Seleziona Casa / Gruppo</label>
+                <select id="devHouseSelect" onchange="gestisciSelezioneCasa()">
+                    <!-- Popolato dinamicamente da JS -->
+                </select>
+
+                <!-- Input nascosto per inserire il nome di una NUOVA casa -->
+                <div id="newHouseContainer" style="display: none;">
+                    <label>Nome Nuova Casa</label>
+                    <input type="text" id="devNewHouse" placeholder="es. Villa Mare, Appartamento 2">
+                </div>
 
                 <label>Nome Pulsante / Comando</label>
                 <input type="text" id="devName" placeholder="es. Cancello Pedonale, Garage">
@@ -74,7 +83,7 @@
             const houseDataParam = urlParams.get('houseData');
 
             if (houseDataParam) {
-                // MODALITÀ OSPITE: Riceve i dati compressi della casa
+                // MODALITÀ OSPITE
                 try {
                     const houseObj = JSON.parse(decodeURIComponent(houseDataParam));
                     document.getElementById('adminView').style.display = 'none';
@@ -149,12 +158,14 @@
             const container = document.getElementById('housesContainer');
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
 
+            // Aggiorna anche la select delle case
+            popolaMenuCase(dispositivi);
+
             if (dispositivi.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #64748b;">Nessun dispositivo presente.</p>';
                 return;
             }
 
-            // Raggruppa i dispositivi per Nome Casa
             const caseGroup = {};
             dispositivi.forEach((dev, originalIndex) => {
                 const houseName = dev.house || "Principale";
@@ -192,6 +203,46 @@
             }
         }
 
+        function popolaMenuCase(dispositivi) {
+            const select = document.getElementById('devHouseSelect');
+            
+            // Estrae i nomi unici delle case esistenti
+            const caseUniche = [...new Set(dispositivi.map(d => d.house || "Principale"))];
+            
+            if (caseUniche.length === 0) {
+                caseUniche.push("Principale");
+            }
+
+            select.innerHTML = '';
+            
+            // Popola le opzioni esistenti
+            caseUniche.forEach(casa => {
+                const opt = document.createElement('option');
+                opt.value = casa;
+                opt.innerText = casa;
+                select.appendChild(opt);
+            });
+
+            // Aggiunge l'opzione per creare una nuova casa
+            const optNew = document.createElement('option');
+            optNew.value = "NEW_HOUSE";
+            optNew.innerText = "➕ Crea nuova casa...";
+            select.appendChild(optNew);
+
+            gestisciSelezioneCasa();
+        }
+
+        function gestisciSelezioneCasa() {
+            const select = document.getElementById('devHouseSelect');
+            const newHouseContainer = document.getElementById('newHouseContainer');
+
+            if (select.value === "NEW_HOUSE") {
+                newHouseContainer.style.display = "block";
+            } else {
+                newHouseContainer.style.display = "none";
+            }
+        }
+
         function copiaLinkCasa(houseName) {
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
             const houseDevices = dispositivi
@@ -215,7 +266,18 @@
         }
 
         function salvaDispositivo() {
-            const house = document.getElementById('devHouse').value.trim() || "Principale";
+            const select = document.getElementById('devHouseSelect');
+            let house = select.value;
+
+            // Se è selezionato "Crea nuova casa", usa il valore del campo di testo dedicato
+            if (house === "NEW_HOUSE") {
+                house = document.getElementById('devNewHouse').value.trim();
+                if (!house) {
+                    alert("Inserisci un nome per la nuova casa!");
+                    return;
+                }
+            }
+
             const name  = document.getElementById('devName').value.trim();
             const url   = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
             const key   = document.getElementById('devKey').value.trim();
@@ -231,6 +293,8 @@
 
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
 
+            // Reset campi
+            document.getElementById('devNewHouse').value = '';
             document.getElementById('devName').value = '';
             document.getElementById('devUrl').value = '';
             document.getElementById('devKey').value = '';
