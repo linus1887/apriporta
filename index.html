@@ -30,7 +30,7 @@
         /* INPUT CON OCCHIO PER PIN */
         .pin-input-group { position: relative; display: flex; align-items: center; }
         .pin-input-group input { padding-right: 45px; }
-        .toggle-eye-btn { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; padding: 0; line-height: 1; }
+        .toggle-eye-btn { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; padding: 0; line-height: 1; user-select: none; }
         .toggle-eye-btn:hover { color: #38bdf8; }
 
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; }
@@ -51,7 +51,7 @@
         .keypad-btn:active { background-color: #38bdf8; }
         .pin-display-wrapper { position: relative; }
         .pin-display { text-align: center; font-size: 24px; letter-spacing: 8px; margin-bottom: 10px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; min-height: 48px; }
-        .keypad-eye-btn { position: absolute; right: 12px; top: 12px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; }
+        .keypad-eye-btn { position: absolute; right: 12px; top: 12px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; user-select: none; }
     </style>
 </head>
 <body>
@@ -100,7 +100,7 @@
                     <label>PIN di Sblocco Porta (Numerico)</label>
                     <div class="pin-input-group">
                         <input type="password" id="devPin" placeholder="es. 1234" maxlength="6" inputmode="numeric">
-                        <button type="button" class="toggle-eye-btn" onclick="toggleFormPinVisibility()">👁️</button>
+                        <button type="button" class="toggle-eye-btn" id="formPinEye" onclick="toggleFormPinVisibility()">👁️</button>
                     </div>
                 </div>
 
@@ -211,7 +211,7 @@
                     </div>
                     <div class="pin-display-wrapper">
                         <div class="pin-display" id="pin-display-${idx}">••••</div>
-                        <button type="button" class="keypad-eye-btn" onclick="toggleKeypadPinVisibility(${idx})">👁️</button>
+                        <button type="button" class="keypad-eye-btn" id="keypad-eye-${idx}" onclick="toggleKeypadPinVisibility(${idx})">👁️</button>
                     </div>
                     <div class="keypad">
                         ${[1,2,3,4,5,6,7,8,9,'C',0,'OK'].map(val => `
@@ -239,12 +239,24 @@
         // TOGGLE OCCHIO NEL FORM CONFIGURAZIONE
         function toggleFormPinVisibility() {
             const pinInput = document.getElementById('devPin');
-            pinInput.type = pinInput.type === 'password' ? 'text' : 'password';
+            const eyeBtn = document.getElementById('formPinEye');
+
+            if (pinInput.type === 'password') {
+                pinInput.type = 'text';
+                eyeBtn.innerText = '🙈';
+            } else {
+                pinInput.type = 'password';
+                eyeBtn.innerText = '👁️';
+            }
         }
 
         // TOGGLE OCCHIO SUL TASTIERINO
         function toggleKeypadPinVisibility(index) {
             pinVisibility[index] = !pinVisibility[index];
+            const eyeBtn = document.getElementById(`keypad-eye-${index}`);
+            if (eyeBtn) {
+                eyeBtn.innerText = pinVisibility[index] ? '🙈' : '👁️';
+            }
             aggiornaDisplayPin(index);
         }
 
@@ -535,6 +547,7 @@
             document.getElementById('devId').value = '';
             document.getElementById('devType').value = 'button';
             document.getElementById('devPin').type = 'password';
+            document.getElementById('formPinEye').innerText = '👁️';
             gestisciTipoAccesso();
         }
 
