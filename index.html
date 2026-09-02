@@ -3,65 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apriporta Shelly</title>
+    <title>Controllo Shelly Remote</title>
     <style>
         * {
             box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
             background-color: #0f172a;
             color: #ffffff;
+            margin: 0;
             padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
         }
         .container {
-            text-align: center;
-            background-color: #1e293b;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            max-width: 400px;
+            max-width: 450px;
             width: 100%;
         }
+        h1, h2 {
+            text-align: center;
+            color: #f8fafc;
+            margin-top: 0;
+        }
         h1 {
-            font-size: 20px;
-            margin-bottom: 25px;
-            color: #e2e8f0;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #38bdf8;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+        }
+        .card {
+            background-color: #1e293b;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 4px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background-color: #0f172a;
+            color: #fff;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #38bdf8;
         }
         .btn {
             width: 100%;
-            padding: 20px;
-            font-size: 20px;
-            font-weight: bold;
-            color: white;
-            background-color: #2563eb;
+            padding: 14px;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 16px;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
             transition: all 0.2s ease;
             -webkit-tap-highlight-color: transparent;
         }
-        .btn:active {
+        .btn-add {
+            background-color: #10b981;
+            color: white;
+            margin-top: 5px;
+        }
+        .btn-add:hover {
+            background-color: #059669;
+        }
+        .device-item {
+            background-color: #0f172a;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #334155;
+        }
+        .device-item:last-child {
+            margin-bottom: 0;
+        }
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .device-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #f1f5f9;
+        }
+        .btn-trigger {
+            background-color: #2563eb;
+            color: white;
+            padding: 16px;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .btn-trigger:active {
             transform: scale(0.96);
             background-color: #1d4ed8;
         }
-        .btn:disabled {
+        .btn-trigger:disabled {
             background-color: #64748b;
             cursor: not-allowed;
             box-shadow: none;
         }
-        #status {
-            margin-top: 20px;
-            font-size: 14px;
+        .btn-delete {
+            background-color: transparent;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: auto;
+        }
+        .btn-delete:hover {
+            background-color: #ef4444;
+            color: white;
+        }
+        .status-msg {
+            font-size: 13px;
+            text-align: center;
+            margin-top: 10px;
+            min-height: 18px;
             color: #94a3b8;
-            min-height: 20px;
         }
     </style>
 </head>
@@ -69,39 +152,120 @@
 
     <div class="container">
         <h1>Controllo Shelly Remote</h1>
-        <button id="mainBtn" class="btn" onclick="attivaRelay()">Attiva Relè</button>
-        <div id="status">Premia il pulsante per attivare</div>
+
+        <!-- LISTA DISPOSITIVI ATTIVI -->
+        <div class="card">
+            <h2>I Tuoi Dispositivi</h2>
+            <div id="devicesList">
+                <p style="text-align: center; color: #64748b;">Nessun dispositivo salvato.</p>
+            </div>
+        </div>
+
+        <!-- FORM PER AGGIUNGERE UN NUOVO DISPOSITIVO -->
+        <div class="card">
+            <h2>Aggiungi Nuovo Dispositivo</h2>
+            
+            <label>Nome Dispositivo</label>
+            <input type="text" id="devName" placeholder="es. Cancello Casa">
+
+            <label>Server URL</label>
+            <input type="text" id="devUrl" placeholder="https://shelly-278-eu.shelly.cloud">
+
+            <label>Auth Key</label>
+            <input type="text" id="devKey" placeholder="La tua Cloud Auth Key">
+
+            <label>Device ID</label>
+            <input type="text" id="devId" placeholder="Es. 1c6920095acc">
+
+            <button class="btn btn-add" onclick="salvaDispositivo()">+ Salva Dispositivo</button>
+        </div>
     </div>
 
     <script>
-        // =========================================================
-        // INSERISCI QUI I TRE DATI CHE HAI RECUPERATO:
-        // =========================================================
-        
-        const serverUrl = "https://shelly-278-eu.shelly.cloud";   // Es. https://shelly-42-eu.shelly.cloud
-        const authKey   = "MjhmYzlhdWlkD629E35BB1288E526F6E5EA6AB0D7626360B4856675F8E98F43BE86A87BEC127B912184F320B1224";    // Es. M2YxNDI3aW5...
-        const deviceId  = "1c6920095acc";    // Es. 483dda40a1b2
+        // Dispositivo di default con i tuoi dati funzionanti
+        const defaultDevice = {
+            name: "Dispositivo Principale",
+            url: "https://shelly-278-eu.shelly.cloud",
+            key: "MjhmYzlhdWlkD629E35BB1288E526F6E5EA6AB0D7626360B4856675F8E98F43BE86A87BEC127B912184F320B1224",
+            id: "1c6920095acc"
+        };
 
-        // =========================================================
+        // Carica i dispositivi all'avvio della pagina
+        document.addEventListener("DOMContentLoaded", caricaDispositivi);
 
-        function attivaRelay() {
-            const btn = document.getElementById('mainBtn');
-            const statusDiv = document.getElementById('status');
+        function caricaDispositivi() {
+            const container = document.getElementById('devicesList');
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices'));
 
-            // Disabilita temporaneamente il pulsante per evitare doppie pressioni
+            // Se è la prima volta in assoluto, carica il dispositivo di default
+            if (!dispositivi || dispositivi.length === 0) {
+                dispositivi = [defaultDevice];
+                localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+            }
+
+            container.innerHTML = '';
+
+            dispositivi.forEach((dev, index) => {
+                const item = document.createElement('div');
+                item.className = 'device-item';
+                item.innerHTML = `
+                    <div class="device-header">
+                        <span class="device-title">${dev.name}</span>
+                        <button class="btn-delete" onclick="eliminaDispositivo(${index})">Elimina</button>
+                    </div>
+                    <button class="btn btn-trigger" id="btn-${index}" onclick="attivaDispositivo(${index})">ATTIVA RELÈ</button>
+                    <div class="status-msg" id="status-${index}">Premia per attivare</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function salvaDispositivo() {
+            const name = document.getElementById('devName').value.trim();
+            const url  = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
+            const key  = document.getElementById('devKey').value.trim();
+            const id   = document.getElementById('devId').value.trim();
+
+            if (!name || !url || !key || !id) {
+                alert("Compila tutti i campi!");
+                return;
+            }
+
+            const nuovoDispositivo = { name, url, key, id };
+            
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+            dispositivi.push(nuovoDispositivo);
+
+            localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+
+            // Pulisci i campi del form
+            document.getElementById('devName').value = '';
+            document.getElementById('devUrl').value = '';
+            document.getElementById('devKey').value = '';
+            document.getElementById('devId').value = '';
+
+            caricaDispositivi();
+        }
+
+        function attivaDispositivo(index) {
+            const dispositivi = JSON.parse(localStorage.getItem('shelly_devices'));
+            const dev = dispositivi[index];
+
+            const btn = document.getElementById(`btn-${index}`);
+            const statusDiv = document.getElementById(`status-${index}`);
+
             btn.disabled = true;
             statusDiv.style.color = "#38bdf8";
             statusDiv.innerText = "Invio comando in corso...";
 
-            // Pulizia URL se contiene uno slash finale accidentale
-            const cleanUrl = serverUrl.replace(/\/$/, "");
+            const cleanUrl = dev.url.replace(/\/$/, "");
             const endpoint = `${cleanUrl}/device/relay/control`;
 
             const formData = new URLSearchParams();
-            formData.append('id', deviceId);
-            formData.append('auth_key', authKey);
-            formData.append('channel', '0'); // Canale del relè
-            formData.append('turn', 'on');  // Invia il comando di accensione
+            formData.append('id', dev.id);
+            formData.append('auth_key', dev.key);
+            formData.append('channel', '0');
+            formData.append('turn', 'on');
 
             fetch(endpoint, {
                 method: 'POST',
@@ -126,13 +290,20 @@
                 console.error(error);
             })
             .finally(() => {
-                // Riabilita il pulsante dopo 3 secondi
                 setTimeout(() => {
                     btn.disabled = false;
                 }, 3000);
             });
         }
-    </script>
 
+        function eliminaDispositivo(index) {
+            if (confirm("Sei sicuro di voler eliminare questo dispositivo?")) {
+                let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+                dispositivi.splice(index, 1);
+                localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+                caricaDispositivi();
+            }
+        }
+    </script>
 </body>
 </html>
