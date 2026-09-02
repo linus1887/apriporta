@@ -69,23 +69,92 @@
         .pin-display { text-align: center; font-size: 24px; letter-spacing: 8px; margin-bottom: 10px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; min-height: 48px; }
         .keypad-eye-btn { position: absolute; right: 12px; top: 12px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; user-select: none; }
 
-        /* MODALE LOGIN */
-        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
-        .login-card { background: #1e293b; padding: 25px; border-radius: 16px; width: 100%; max-width: 360px; border: 1px solid #334155; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .login-card h2 { border: none; margin-bottom: 20px; }
-        .login-err { color: #ef4444; font-size: 13px; margin-top: 8px; display: none; }
+        /* MODALE LOGIN & EDIT POPUP */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .modal-card { background: #1e293b; padding: 25px; border-radius: 16px; width: 100%; max-width: 500px; border: 1px solid #334155; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
+        .modal-card h2 { border: none; margin-bottom: 20px; text-align: center; }
+        .login-err { color: #ef4444; font-size: 13px; margin-top: 8px; display: none; text-align: center; }
     </style>
 </head>
 <body>
 
     <!-- OVERLAY LOGIN -->
-    <div id="loginOverlay" class="login-overlay">
-        <div class="login-card">
+    <div id="loginOverlay" class="modal-overlay">
+        <div class="modal-card" style="max-width: 360px;">
             <h2>🔒 Accesso Riservato</h2>
             <label for="adminPassword" style="text-align: left;">Inserisci Password Admin <span class="req">*</span></label>
             <input type="password" id="adminPassword" placeholder="••••••••" onkeyup="if(event.key==='Enter') verificaPassword()">
             <button class="btn btn-add" onclick="verificaPassword()">Accedi</button>
             <div id="loginError" class="login-err">Password errata! Riprova.</div>
+        </div>
+    </div>
+
+    <!-- POPUP MODIFICA DISPOSITIVO -->
+    <div id="editDeviceModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <h2>✏️ Modifica Dispositivo</h2>
+            <input type="hidden" id="editModalDevId" value="">
+            
+            <label>Seleziona Casa / Cartella <span class="req">*</span></label>
+            <select id="editModalHouseSelect"></select>
+
+            <label>Nome Pulsante / Comando <span class="req">*</span></label>
+            <input type="text" id="editModalName" placeholder="es. Portone">
+
+            <label>Tipo Accesso <span class="req">*</span></label>
+            <select id="editModalType" onchange="gestisciTipoAccessoModal()">
+                <option value="button">🔘 Tasto diretto</option>
+                <option value="pin">🔢 Tastierino numerico (PIN)</option>
+            </select>
+
+            <div id="editModalPinContainer" style="display: none;">
+                <label>Tabella Gestione PIN Ospiti <span class="req">*</span></label>
+                <button type="button" class="btn-small-add" onclick="aggiungiRigaPinTableModal()">+ Aggiungi PIN ospite</button>
+                <div class="table-responsive">
+                    <table class="pin-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">Nome</th>
+                                <th style="width: 20%;">PIN <span class="req">*</span></th>
+                                <th style="width: 10%;">Perm.</th>
+                                <th style="width: 20%;">Dal</th>
+                                <th style="width: 20%;">Al</th>
+                                <th style="width: 5%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="editModalPinTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <label>Server URL <span class="req">*</span></label>
+            <input type="text" id="editModalUrl" placeholder="https://shelly-xxx-eu.shelly.cloud">
+
+            <label>Cloud Key <span class="req">*</span></label>
+            <input type="text" id="editModalKey" placeholder="La tua Cloud Key">
+
+            <label>Device ID <span class="req">*</span></label>
+            <input type="text" id="editModalId" placeholder="Es. 1x1234567xxx">
+
+            <button class="btn btn-add" onclick="salvaModificheModal()">Salva Modifiche</button>
+            <button class="btn" onclick="chiudiModalDispositivo()" style="background-color: #64748b; margin-top: 8px;">Annulla</button>
+        </div>
+    </div>
+
+    <!-- POPUP MODIFICA CASA -->
+    <div id="editHouseModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="max-width: 400px;">
+            <h2>✏️ Modifica Appartamento</h2>
+            <input type="hidden" id="editHouseModalId" value="">
+            
+            <label>Nome Appartamento <span class="req">*</span></label>
+            <input type="text" id="editHouseModalName">
+
+            <label>Indirizzo dell'Appartamento</label>
+            <input type="text" id="editHouseModalAddress">
+
+            <button class="btn btn-add" onclick="salvaModificaCasaModal()">Salva Modifiche</button>
+            <button class="btn" onclick="chiudiModalCasa()" style="background-color: #64748b; margin-top: 8px;">Annulla</button>
         </div>
     </div>
 
@@ -107,11 +176,10 @@
                 <button class="tab-btn" onclick="switchTab('tab-houses')">🏠 Appartamenti e Dispositivi</button>
             </div>
 
-            <!-- SCHEDA 1: CREAZIONE / MODIFICA -->
+            <!-- SCHEDA 1: CREAZIONE -->
             <div id="tab-create" class="tab-content active">
                 <div class="card" id="formCard">
-                    <h2 id="formTitle">Aggiungi Nuovo Dispositivo</h2>
-                    <input type="hidden" id="editingDevId" value="">
+                    <h2>Aggiungi Nuovo Dispositivo</h2>
                     
                     <label>Seleziona Casa / Cartella <span class="req">*</span></label>
                     <select id="devHouseSelect" onchange="gestisciSelezioneCasa()"></select>
@@ -149,9 +217,7 @@
                                         <th style="width: 5%;"></th>
                                     </tr>
                                 </thead>
-                                <tbody id="pinTableBody">
-                                    <!-- Righe create dinamicamente -->
-                                </tbody>
+                                <tbody id="pinTableBody"></tbody>
                             </table>
                         </div>
                     </div>
@@ -166,7 +232,6 @@
                     <input type="text" id="devId" placeholder="Es. 1x1234567xxx">
 
                     <button class="btn btn-add" id="btnSave" onclick="salvaDispositivo()">+ Salva Dispositivo</button>
-                    <button class="btn" id="btnCancel" onclick="resetForm()" style="display:none; background-color: #64748b; margin-top: 8px;">Annulla Modifica</button>
                 </div>
             </div>
 
@@ -300,7 +365,7 @@
 
             const actionButtons = !isGuest ? `
                 <div>
-                    <button class="btn-edit" onclick="caricaInModifica('${dev.idInternal}')">✏️ Edit</button>
+                    <button class="btn-edit" onclick="apriModalDispositivo('${dev.idInternal}')">✏️ Edit</button>
                     <button class="btn-delete" onclick="eliminaDispositivo('${dev.idInternal}')">Elimina</button>
                 </div>
             ` : '';
@@ -339,8 +404,19 @@
             return item;
         }
 
+        /* TABELLA PIN - VISTA NUOVO DISPOSITIVO */
         function aggiungiRigaPinTable(guest = '', pin = '', isPermanent = false, startDate = '', endDate = '') {
             const tbody = document.getElementById('pinTableBody');
+            tbody.appendChild(creaRigaPinElemento(guest, pin, isPermanent, startDate, endDate));
+        }
+
+        /* TABELLA PIN - POPUP MODIFICA */
+        function aggiungiRigaPinTableModal(guest = '', pin = '', isPermanent = false, startDate = '', endDate = '') {
+            const tbody = document.getElementById('editModalPinTableBody');
+            tbody.appendChild(creaRigaPinElemento(guest, pin, isPermanent, startDate, endDate));
+        }
+
+        function creaRigaPinElemento(guest = '', pin = '', isPermanent = false, startDate = '', endDate = '') {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><input type="text" class="pin-guest" placeholder="Nome" value="${guest}"></td>
@@ -350,7 +426,7 @@
                 <td><input type="date" class="pin-end" value="${endDate}" ${isPermanent ? 'disabled' : ''}></td>
                 <td><button type="button" class="btn-delete" style="padding: 6px 8px;" onclick="rimuoviRigaPin(this)">✕</button></td>
             `;
-            tbody.appendChild(tr);
+            return tr;
         }
 
         function gestisciStatoPermanente(checkbox) {
@@ -373,22 +449,19 @@
             const tr = btn.closest('tr');
             const guestName = tr.querySelector('.pin-guest').value.trim();
             const pinVal = tr.querySelector('.pin-val').value.trim();
-            const startDate = tr.querySelector('.pin-start').value;
-            const endDate = tr.querySelector('.pin-end').value;
 
-            if (!guestName && !pinVal && !startDate && !endDate) {
+            if (!guestName && !pinVal) {
                 tr.remove();
                 return;
             }
 
-            let messaggio = `Sei sicuro di voler eliminare il PIN${guestName ? ' di "' + guestName + '"' : ''}${pinVal ? ' (' + pinVal + ')' : ''}?`;
-            if (confirm(messaggio)) {
+            if (confirm(`Rimuovere il PIN${guestName ? ' di "' + guestName + '"' : ''}?`)) {
                 tr.remove();
             }
         }
 
-        function ottieniListaPinDaTabella() {
-            const righe = document.querySelectorAll('#pinTableBody tr');
+        function ottieniListaPinDaTabella(targetTbodyId = 'pinTableBody') {
+            const righe = document.querySelectorAll(`#${targetTbodyId} tr`);
             const pinList = [];
             let error = false;
 
@@ -409,29 +482,31 @@
             });
 
             if (error) {
-                alert("Tutti i PIN inseriti devono essere composti da esattamente 4 cifre numeriche!");
+                alert("Tutti i PIN inseriti devono essere di 4 cifre numeriche!");
                 return null;
             }
 
             return pinList;
         }
 
-        function popolaTabellaPin(pinList = []) {
-            const tbody = document.getElementById('pinTableBody');
+        function popolaTabellaPin(pinList = [], targetTbodyId = 'pinTableBody') {
+            const tbody = document.getElementById(targetTbodyId);
             tbody.innerHTML = '';
             if (pinList.length === 0) {
-                aggiungiRigaPinTable();
+                if(targetTbodyId === 'pinTableBody') aggiungiRigaPinTable();
+                else aggiungiRigaPinTableModal();
             } else {
-                pinList.forEach(p => aggiungiRigaPinTable(p.guest, p.pin, !!p.isPermanent, p.startDate, p.endDate));
+                pinList.forEach(p => {
+                    if(targetTbodyId === 'pinTableBody') aggiungiRigaPinTable(p.guest, p.pin, !!p.isPermanent, p.startDate, p.endDate);
+                    else aggiungiRigaPinTableModal(p.guest, p.pin, !!p.isPermanent, p.startDate, p.endDate);
+                });
             }
         }
 
         function toggleKeypadPinVisibility(index) {
             pinVisibility[index] = !pinVisibility[index];
             const eyeBtn = document.getElementById(`keypad-eye-${index}`);
-            if (eyeBtn) {
-                eyeBtn.innerText = pinVisibility[index] ? '🙈' : '👁️';
-            }
+            if (eyeBtn) eyeBtn.innerText = pinVisibility[index] ? '🙈' : '👁️';
             aggiornaDisplayPin(index);
         }
 
@@ -533,7 +608,6 @@
 
         function caricaDispositiviAdmin() {
             const container = document.getElementById('housesContainer');
-            const housesCard = document.getElementById('housesCard');
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
 
             popolaMenuCase(dispositivi);
@@ -572,7 +646,7 @@
                         ${addressHtml}
                         <div class="house-actions-row">
                             <button class="btn-house-action btn-house-share" onclick="copiaLinkCasa('${houseId}')">🔗 Copia Link</button>
-                            <button class="btn-house-action btn-house-rename" onclick="modificaInteraCasa('${houseId}', '${houseName.replace(/'/g, "\\'")}', '${houseAddress.replace(/'/g, "\\'")}')">✏️ Modifica Casa</button>
+                            <button class="btn-house-action btn-house-rename" onclick="apriModalCasa('${houseId}', '${houseName.replace(/'/g, "\\'")}', '${houseAddress.replace(/'/g, "\\'")}')">✏️ Modifica Casa</button>
                             <button class="btn-house-action btn-house-delete" onclick="eliminaInteroAppartamento('${houseId}', '${houseName.replace(/'/g, "\\'")}')">🗑️ Elimina</button>
                         </div>
                         <div id="dev-list-${houseId}"></div>
@@ -590,14 +664,22 @@
 
         function popolaMenuCase(dispositivi) {
             const select = document.getElementById('devHouseSelect');
+            const modalSelect = document.getElementById('editModalHouseSelect');
             const caseUniche = [...new Set(dispositivi.map(d => d.house || "Principale"))];
 
             select.innerHTML = '';
+            modalSelect.innerHTML = '';
+
             caseUniche.forEach(casa => {
                 const opt = document.createElement('option');
                 opt.value = casa;
                 opt.innerText = casa;
                 select.appendChild(opt);
+
+                const optModal = document.createElement('option');
+                optModal.value = casa;
+                optModal.innerText = casa;
+                modalSelect.appendChild(optModal);
             });
 
             const optNew = document.createElement('option');
@@ -623,9 +705,18 @@
             }
         }
 
+        function gestisciTipoAccessoModal() {
+            const type = document.getElementById('editModalType').value;
+            const pinContainer = document.getElementById('editModalPinContainer');
+            pinContainer.style.display = type === 'pin' ? 'block' : 'none';
+            if (type === 'pin' && document.querySelectorAll('#editModalPinTableBody tr').length === 0) {
+                aggiungiRigaPinTableModal();
+            }
+        }
+
         function copiaLinkCasa(houseId) {
             if(!houseId || houseId === 'undefined') {
-                alert("Errore nell'ID della casa. Prova a salvare di nuovo la casa.");
+                alert("Errore nell'ID della casa.");
                 return;
             }
 
@@ -639,47 +730,121 @@
             });
         }
 
-        function modificaInteraCasa(houseId, vecchioNome, vecchioIndirizzo) {
-            const nuovoNome = prompt(`Modifica nome dell'appartamento:`, vecchioNome);
-            if (nuovoNome === null) return;
+        /* POPUP MODIFICA CASA */
+        function apriModalCasa(houseId, vecchioNome, vecchioIndirizzo) {
+            document.getElementById('editHouseModalId').value = houseId;
+            document.getElementById('editHouseModalName').value = vecchioNome;
+            document.getElementById('editHouseModalAddress').value = vecchioIndirizzo;
+            document.getElementById('editHouseModal').style.display = 'flex';
+        }
 
-            const nuovoIndirizzo = prompt(`Modifica indirizzo dell'appartamento:`, vecchioIndirizzo);
-            if (nuovoIndirizzo === null) return;
+        function chiudiModalCasa() {
+            document.getElementById('editHouseModal').style.display = 'none';
+        }
 
-            const nomePulito = nuovoNome.trim() || vecchioNome;
-            const indirizzoPulito = nuovoIndirizzo.trim();
+        function salvaModificaCasaModal() {
+            const houseId = document.getElementById('editHouseModalId').value;
+            const nuovoNome = document.getElementById('editHouseModalName').value.trim();
+            const nuovoIndirizzo = document.getElementById('editHouseModalAddress').value.trim();
+
+            if (!nuovoNome) {
+                alert("Inserisci un nome per l'appartamento.");
+                return;
+            }
 
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-
             dispositivi.forEach(dev => {
-                if (dev.houseId === houseId || dev.house === vecchioNome) {
-                    dev.house = nomePulito;
-                    dev.address = indirizzoPulito;
+                if (dev.houseId === houseId) {
+                    dev.house = nuovoNome;
+                    dev.address = nuovoIndirizzo;
                 }
             });
 
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
-            resetForm();
+            chiudiModalCasa();
             caricaDispositiviAdmin();
         }
 
-        function eliminaInteroAppartamento(houseId, houseName) {
-            const risposta = confirm(`Sei sicuro di voler eliminare interamente l'appartamento "${houseName}"?\n\nQuesta azione rimuoverà tutti i dispositivi, comandi e PIN configurati per questo appartamento.`);
-            if (!risposta) return;
-
+        /* POPUP MODIFICA DISPOSITIVO */
+        function apriModalDispositivo(idInternal) {
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            dispositivi = dispositivi.filter(d => d.houseId !== houseId && d.house !== houseName);
-            localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+            const dev = dispositivi.find(d => d.idInternal === idInternal);
 
-            resetForm();
+            if (!dev) return;
+
+            document.getElementById('editModalDevId').value = dev.idInternal;
+            document.getElementById('editModalHouseSelect').value = dev.house;
+            document.getElementById('editModalName').value = dev.name;
+            document.getElementById('editModalType').value = dev.type;
+            
+            gestisciTipoAccessoModal();
+            popolaTabellaPin(dev.pinList || [], 'editModalPinTableBody');
+
+            document.getElementById('editModalUrl').value = dev.url;
+            document.getElementById('editModalKey').value = dev.key;
+            document.getElementById('editModalId').value = dev.id;
+
+            document.getElementById('editDeviceModal').style.display = 'flex';
+        }
+
+        function chiudiModalDispositivo() {
+            document.getElementById('editDeviceModal').style.display = 'none';
+        }
+
+        function salvaModificheModal() {
+            const editingId = document.getElementById('editModalDevId').value;
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+
+            const house = document.getElementById('editModalHouseSelect').value;
+            const devEsistente = dispositivi.find(d => d.house === house);
+            const address = devEsistente ? (devEsistente.address || "") : "";
+            const houseId = devEsistente && devEsistente.houseId ? devEsistente.houseId : ('house_' + Date.now());
+
+            const name = document.getElementById('editModalName').value.trim();
+            const type = document.getElementById('editModalType').value;
+            const pinList = type === 'pin' ? ottieniListaPinDaTabella('editModalPinTableBody') : [];
+            
+            if (type === 'pin' && pinList === null) return;
+
+            const url  = document.getElementById('editModalUrl').value.trim().replace(/\/$/, "");
+            const key  = document.getElementById('editModalKey').value.trim();
+            const id   = document.getElementById('editModalId').value.trim();
+
+            if (!house || !name || !url || !key || !id) {
+                alert("Compila tutti i campi obbligatori!");
+                return;
+            }
+
+            if (type === 'pin' && pinList.length === 0) {
+                alert("Inserisci almeno un PIN valido nella tabella!");
+                return;
+            }
+
+            const index = dispositivi.findIndex(d => d.idInternal === editingId);
+            if (index !== -1) {
+                dispositivi[index] = { 
+                    ...dispositivi[index], 
+                    house, 
+                    address, 
+                    houseId,
+                    name, 
+                    type, 
+                    pinList, 
+                    url, 
+                    key, 
+                    id 
+                };
+            }
+
+            localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+            chiudiModalDispositivo();
             caricaDispositiviAdmin();
         }
 
         function salvaDispositivo() {
-            const editingId = document.getElementById('editingDevId').value;
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-
             const select = document.getElementById('devHouseSelect');
+
             let house = "";
             let address = "";
             let houseId = "";
@@ -697,11 +862,9 @@
 
             const name = document.getElementById('devName').value.trim();
             const type = document.getElementById('devType').value;
-            const pinList = type === 'pin' ? ottieniListaPinDaTabella() : [];
+            const pinList = type === 'pin' ? ottieniListaPinDaTabella('pinTableBody') : [];
             
-            if (type === 'pin' && pinList === null) {
-                return;
-            }
+            if (type === 'pin' && pinList === null) return;
 
             const url  = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
             const key  = document.getElementById('devKey').value.trim();
@@ -717,33 +880,8 @@
                 return;
             }
 
-            if (editingId) {
-                const index = dispositivi.findIndex(d => d.idInternal === editingId);
-                if (index !== -1) {
-                    dispositivi[index] = { 
-                        ...dispositivi[index], 
-                        house, 
-                        address, 
-                        houseId,
-                        name, 
-                        type, 
-                        pinList, 
-                        url, 
-                        key, 
-                        id 
-                    };
-                    
-                    dispositivi.forEach(d => {
-                        if(d.house === house) {
-                            d.address = address;
-                            d.houseId = houseId;
-                        }
-                    });
-                }
-            } else {
-                const idInternal = 'dev_' + Date.now();
-                dispositivi.push({ idInternal, houseId, house, address, name, type, pinList, url, key, id });
-            }
+            const idInternal = 'dev_' + Date.now();
+            dispositivi.push({ idInternal, houseId, house, address, name, type, pinList, url, key, id });
 
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
             resetForm();
@@ -751,49 +889,24 @@
             switchTab('tab-houses');
         }
 
-        function caricaInModifica(idInternal) {
-            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            const dev = dispositivi.find(d => d.idInternal === idInternal);
-
-            if (!dev) return;
-
-            switchTab('tab-create');
-
-            document.getElementById('editingDevId').value = dev.idInternal;
-            document.getElementById('formTitle').innerText = "✏️ Modifica Dispositivo";
-            document.getElementById('btnSave').innerText = "Salva Modifiche";
-            document.getElementById('btnCancel').style.display = "block";
-
-            document.getElementById('devHouseSelect').value = dev.house;
-            gestisciSelezioneCasa();
-
-            document.getElementById('devName').value = dev.name;
-            document.getElementById('devType').value = dev.type;
-            gestisciTipoAccesso();
-
-            popolaTabellaPin(dev.pinList || []);
-            document.getElementById('devUrl').value = dev.url;
-            document.getElementById('devKey').value = dev.key;
-            document.getElementById('devId').value = dev.id;
-
-            document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
-        }
-
         function resetForm() {
-            document.getElementById('editingDevId').value = '';
-            document.getElementById('formTitle').innerText = "Aggiungi Nuovo Dispositivo";
-            document.getElementById('btnSave').innerText = "+ Salva Dispositivo";
-            document.getElementById('btnCancel').style.display = "none";
-
             document.getElementById('devNewHouse').value = '';
             document.getElementById('devHouseAddress').value = '';
             document.getElementById('devName').value = '';
-            popolaTabellaPin([]);
+            popolaTabellaPin([], 'pinTableBody');
             document.getElementById('devUrl').value = '';
             document.getElementById('devKey').value = '';
             document.getElementById('devId').value = '';
             document.getElementById('devType').value = 'button';
             gestisciTipoAccesso();
+        }
+
+        function eliminaInteroAppartamento(houseId, houseName) {
+            if (!confirm(`Eliminare l'appartamento "${houseName}" e tutti i suoi dispositivi?`)) return;
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+            dispositivi = dispositivi.filter(d => d.houseId !== houseId && d.house !== houseName);
+            localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+            caricaDispositiviAdmin();
         }
 
         function eliminaDispositivo(idInternal) {
