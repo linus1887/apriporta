@@ -23,120 +23,110 @@
         .btn-trigger:active { transform: scale(0.96); background-color: #1d4ed8; }
         .btn-trigger:disabled { background-color: #64748b; cursor: not-allowed; box-shadow: none; }
         .btn-delete { background-color: #ef4444; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; }
+        .btn-share { background-color: #8b5cf6; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; }
         .status-msg { font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; color: #94a3b8; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Controllo Shelly Remote</h1>
+        <h1 id="pageTitle">Controllo Shelly Remote</h1>
 
-        <div class="card">
-            <h2>I Tuoi Dispositivi</h2>
-            <div id="devicesList"></div>
+        <!-- VISTA PER L'OSPITE (SI ATTIVA SOLO SE NELL'URL CI SONO I PARAMETRI) -->
+        <div id="guestView" class="card" style="display: none;">
+            <h2 id="guestDeviceName">Dispositivo Ospite</h2>
+            <button class="btn btn-trigger" id="guestBtn" onclick="attivaOspite()">ATTIVA RELÈ</button>
+            <div class="status-msg" id="guestStatus">Premia per attivare</div>
         </div>
 
-        <div class="card">
-            <h2>Aggiungi Nuovo Dispositivo</h2>
-            <label>Nome Dispositivo</label>
-            <input type="text" id="devName" placeholder="es. Cancello Casa">
+        <!-- VISTA AMMINISTRATORE (PANNELLO COMPLETO) -->
+        <div id="adminView">
+            <div class="card">
+                <h2>I Tuoi Dispositivi</h2>
+                <div id="devicesList"></div>
+            </div>
 
-            <label>Server URL</label>
-            <input type="text" id="devUrl" placeholder="https://shelly-278-eu.shelly.cloud">
+            <div class="card">
+                <h2>Aggiungi Nuovo Dispositivo</h2>
+                <label>Nome Dispositivo</label>
+                <input type="text" id="devName" placeholder="es. Cancello Casa">
 
-            <label>Auth Key</label>
-            <input type="text" id="devKey" placeholder="La tua Cloud Auth Key">
+                <label>Server URL</label>
+                <input type="text" id="devUrl" placeholder="https://shelly-278-eu.shelly.cloud">
 
-            <label>Device ID</label>
-            <input type="text" id="devId" placeholder="Es. 1c6920095acc">
+                <label>Auth Key</label>
+                <input type="text" id="devKey" placeholder="La tua Cloud Auth Key">
 
-            <button class="btn btn-add" onclick="salvaDispositivo()">+ Salva Dispositivo</button>
+                <label>Device ID</label>
+                <input type="text" id="devId" placeholder="Es. 1c6920095acc">
+
+                <button class="btn btn-add" onclick="salvaDispositivo()">+ Salva Dispositivo</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const initialDevice = {
-            name: "Dispositivo Principale",
-            url: "https://shelly-278-eu.shelly.cloud",
-            key: "MjhmYzlhdWlkD629E35BB1288E526F6E5EA6AB0D7626360B4856675F8E98F43BE86A87BEC127B912184F320B1224",
-            id: "1c6920095acc"
-        };
+        let guestData = null;
 
         document.addEventListener("DOMContentLoaded", function() {
-            // Se la memoria è completamente vuota (primo avvio assoluto) imposta il dispositivo iniziale
-            if (localStorage.getItem('shelly_devices') === null) {
-                localStorage.setItem('shelly_devices', JSON.stringify([initialDevice]));
+            // Controlla se l'URL contiene parametri per la modalità "Ospite"
+            const urlParams = new URLSearchParams(window.location.search);
+            const name = urlParams.get('name');
+            const url  = urlParams.get('url');
+            const key  = urlParams.get('key');
+            const id   = urlParams.get('id');
+
+            if (name && url && key && id) {
+                // MODALITÀ OSPITE ACTIVATED
+                guestData = { name, url, key, id };
+                document.getElementById('adminView').style.display = 'none';
+                document.getElementById('guestView').style.display = 'block';
+                document.getElementById('guestDeviceName').innerText = name;
+                document.getElementById('pageTitle').innerText = name;
+            } else {
+                // MODALITÀ AMMINISTRATORE
+                const initialDevice = {
+                    name: "Dispositivo Principale",
+                    url: "https://shelly-278-eu.shelly.cloud",
+                    key: "MjhmYzlhdWlkD629E35BB1288E526F6E5EA6AB0D7626360B4856675F8E98F43BE86A87BEC127B912184F320B1224",
+                    id: "1c6920095acc"
+                };
+
+                if (localStorage.getItem('shelly_devices') === null) {
+                    localStorage.setItem('shelly_devices', JSON.stringify([initialDevice]));
+                }
+                caricaDispositivi();
             }
-            caricaDispositivi();
         });
 
-        function caricaDispositivi() {
-            const container = document.getElementById('devicesList');
-            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-
-            if (dispositivi.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #64748b;">Nessun dispositivo salvato.</p>';
-                return;
-            }
-
-            container.innerHTML = '';
-
-            dispositivi.forEach((dev, index) => {
-                const item = document.createElement('div');
-                item.className = 'device-item';
-                item.innerHTML = `
-                    <div class="device-header">
-                        <span class="device-title">${dev.name}</span>
-                        <button class="btn-delete" onclick="eliminaDispositivo(${index})">Elimina</button>
-                    </div>
-                    <button class="btn btn-trigger" id="btn-${index}" onclick="attivaDispositivo(${index})">ATTIVA RELÈ</button>
-                    <div class="status-msg" id="status-${index}">Premia per attivare</div>
-                `;
-                container.appendChild(item);
-            });
+        // FUNZIONE DEDICATA ALL'OSPITE
+        function attivaOspite() {
+            if (!guestData) return;
+            inviaComando(guestData.url, guestData.id, guestData.key, 'guestBtn', 'guestStatus');
         }
 
-        function salvaDispositivo() {
-            const name = document.getElementById('devName').value.trim();
-            const url  = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
-            const key  = document.getElementById('devKey').value.trim();
-            const id   = document.getElementById('devId').value.trim();
-
-            if (!name || !url || !key || !id) {
-                alert("Compila tutti i campi!");
-                return;
-            }
-
-            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            dispositivi.push({ name, url, key, id });
-
-            localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
-
-            document.getElementById('devName').value = '';
-            document.getElementById('devUrl').value = '';
-            document.getElementById('devKey').value = '';
-            document.getElementById('devId').value = '';
-
-            caricaDispositivi();
-        }
-
+        // FUNZIONE AMMINISTRATORE
         function attivaDispositivo(index) {
             const dispositivi = JSON.parse(localStorage.getItem('shelly_devices'));
             const dev = dispositivi[index];
+            inviaComando(dev.url, dev.id, dev.key, `btn-${index}`, `status-${index}`);
+        }
 
-            const btn = document.getElementById(`btn-${index}`);
-            const statusDiv = document.getElementById(`status-${index}`);
+        // INVIO CHIAMATA HTTP
+        function inviaComando(serverUrl, deviceId, authKey, btnId, statusId) {
+            const btn = document.getElementById(btnId);
+            const statusDiv = document.getElementById(statusId);
 
             btn.disabled = true;
             statusDiv.style.color = "#38bdf8";
             statusDiv.innerText = "Invio comando in corso...";
 
-            const cleanUrl = dev.url.replace(/\/$/, "");
+            const cleanUrl = serverUrl.replace(/\/$/, "");
             const endpoint = `${cleanUrl}/device/relay/control`;
 
             const formData = new URLSearchParams();
-            formData.append('id', dev.id);
-            formData.append('auth_key', dev.key);
+            formData.append('id', deviceId);
+            formData.append('auth_key', authKey);
             formData.append('channel', '0');
             formData.append('turn', 'on');
 
@@ -164,9 +154,75 @@
             });
         }
 
+        function caricaDispositivi() {
+            const container = document.getElementById('devicesList');
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+
+            if (dispositivi.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b;">Nessun dispositivo salvato.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            dispositivi.forEach((dev, index) => {
+                const item = document.createElement('div');
+                item.className = 'device-item';
+                item.innerHTML = `
+                    <div class="device-header">
+                        <span class="device-title">${dev.name}</span>
+                        <div>
+                            <button class="btn-share" onclick="copiaLinkOspite(${index})">Copia Link Ospite</button>
+                            <button class="btn-delete" onclick="eliminaDispositivo(${index})">Elimina</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-trigger" id="btn-${index}" onclick="attivaDispositivo(${index})">ATTIVA RELÈ</button>
+                    <div class="status-msg" id="status-${index}">Premia per attivare</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function copiaLinkOspite(index) {
+            const dispositivi = JSON.parse(localStorage.getItem('shelly_devices'));
+            const dev = dispositivi[index];
+            
+            const baseUrl = window.location.href.split('?')[0];
+            const linkOspite = `${baseUrl}?name=${encodeURIComponent(dev.name)}&url=${encodeURIComponent(dev.url)}&key=${encodeURIComponent(dev.key)}&id=${encodeURIComponent(dev.id)}`;
+            
+            navigator.clipboard.writeText(linkOspite).then(() => {
+                alert("✔ Link per l'ospite copiato negli appunti!\n\nInvialo via WhatsApp/Email al tuo host.");
+            }).catch(err => {
+                prompt("Copia manualmente questo link per l'ospite:", linkOspite);
+            });
+        }
+
+        function salvaDispositivo() {
+            const name = document.getElementById('devName').value.trim();
+            const url  = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
+            const key  = document.getElementById('devKey').value.trim();
+            const id   = document.getElementById('devId').value.trim();
+
+            if (!name || !url || !key || !id) {
+                alert("Compila tutti i campi!");
+                return;
+            }
+
+            let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
+            dispositivi.push({ name, url, key, id });
+
+            localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
+
+            document.getElementById('devName').value = '';
+            document.getElementById('devUrl').value = '';
+            document.getElementById('devKey').value = '';
+            document.getElementById('devId').value = '';
+
+            caricaDispositivi();
+        }
+
         function eliminaDispositivo(index) {
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
-            // Rimuove l'elemento senza chiedere conferme pop-up che potrebbero essere bloccate dal browser
             dispositivi.splice(index, 1);
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
             caricaDispositivi();
