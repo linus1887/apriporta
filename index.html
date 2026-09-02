@@ -27,6 +27,12 @@
         input, select { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
         input:focus, select:focus { outline: none; border-color: #38bdf8; }
         
+        /* INPUT CON OCCHIO PER PIN */
+        .pin-input-group { position: relative; display: flex; align-items: center; }
+        .pin-input-group input { padding-right: 45px; }
+        .toggle-eye-btn { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; padding: 0; line-height: 1; }
+        .toggle-eye-btn:hover { color: #38bdf8; }
+
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; }
         .btn-add { background-color: #10b981; color: white; margin-top: 5px; }
         .btn-edit { background-color: #f59e0b; color: white; border: none; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; }
@@ -43,7 +49,9 @@
         .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
         .keypad-btn { background-color: #334155; color: white; font-size: 20px; padding: 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
         .keypad-btn:active { background-color: #38bdf8; }
+        .pin-display-wrapper { position: relative; }
         .pin-display { text-align: center; font-size: 24px; letter-spacing: 8px; margin-bottom: 10px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; min-height: 48px; }
+        .keypad-eye-btn { position: absolute; right: 12px; top: 12px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -90,7 +98,10 @@
 
                 <div id="pinContainer" style="display: none;">
                     <label>PIN di Sblocco Porta (Numerico)</label>
-                    <input type="password" id="devPin" placeholder="es. 1234" maxlength="6" inputmode="numeric">
+                    <div class="pin-input-group">
+                        <input type="password" id="devPin" placeholder="es. 1234" maxlength="6" inputmode="numeric">
+                        <button type="button" class="toggle-eye-btn" onclick="toggleFormPinVisibility()">👁️</button>
+                    </div>
                 </div>
 
                 <label>Server URL</label>
@@ -110,22 +121,19 @@
 
     <script>
         const currentPins = {};
+        const pinVisibility = {};
 
-        // Normalizza e migra i vecchi dati se sprovvisti di ID interni
         function migraDatiEsistenti() {
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
             let modificato = false;
-            
             const houseMap = {};
 
             dispositivi.forEach((dev, index) => {
                 const hName = dev.house || "Principale";
-                
                 if (!dev.idInternal) {
                     dev.idInternal = 'dev_' + Date.now() + '_' + index;
                     modificato = true;
                 }
-
                 if (!dev.houseId) {
                     if (!houseMap[hName]) {
                         houseMap[hName] = 'house_' + Math.random().toString(36).substr(2, 9);
@@ -149,7 +157,6 @@
             const houseIdParam = urlParams.get('houseId');
 
             if (houseIdParam) {
-                // MODALITÀ OSPITE BASATA SU ID PERMANENTE
                 document.getElementById('adminView').style.display = 'none';
                 document.getElementById('guestView').style.display = 'block';
 
@@ -202,7 +209,10 @@
                         <span class="device-title">🔑 ${dev.name}</span>
                         ${actionButtons}
                     </div>
-                    <div class="pin-display" id="pin-display-${idx}">••••</div>
+                    <div class="pin-display-wrapper">
+                        <div class="pin-display" id="pin-display-${idx}">••••</div>
+                        <button type="button" class="keypad-eye-btn" onclick="toggleKeypadPinVisibility(${idx})">👁️</button>
+                    </div>
                     <div class="keypad">
                         ${[1,2,3,4,5,6,7,8,9,'C',0,'OK'].map(val => `
                             <button class="keypad-btn" onclick="gestisciPinInput('${val}', ${idx}, '${dev.url}', '${dev.id}', '${dev.key}', '${dev.pin}', '${statusId}')">${val}</button>
@@ -226,14 +236,35 @@
             return item;
         }
 
+        // TOGGLE OCCHIO NEL FORM CONFIGURAZIONE
+        function toggleFormPinVisibility() {
+            const pinInput = document.getElementById('devPin');
+            pinInput.type = pinInput.type === 'password' ? 'text' : 'password';
+        }
+
+        // TOGGLE OCCHIO SUL TASTIERINO
+        function toggleKeypadPinVisibility(index) {
+            pinVisibility[index] = !pinVisibility[index];
+            aggiornaDisplayPin(index);
+        }
+
+        function aggiornaDisplayPin(index) {
+            const display = document.getElementById(`pin-display-${index}`);
+            const currentVal = currentPins[index] || "";
+            if (!currentVal) {
+                display.innerText = "••••";
+            } else {
+                display.innerText = pinVisibility[index] ? currentVal : "•".repeat(currentVal.length);
+            }
+        }
+
         function gestisciPinInput(val, index, url, id, key, correctPin, statusId) {
             if (!currentPins[index]) currentPins[index] = "";
-            const display = document.getElementById(`pin-display-${index}`);
             const statusDiv = document.getElementById(statusId);
 
             if (val === 'C') {
                 currentPins[index] = "";
-                display.innerText = "••••";
+                aggiornaDisplayPin(index);
                 statusDiv.innerText = "Inserisci il PIN per aprire";
             } else if (val === 'OK') {
                 if (currentPins[index] === correctPin) {
@@ -243,11 +274,11 @@
                     statusDiv.innerText = "✖ PIN Errato!";
                 }
                 currentPins[index] = "";
-                display.innerText = "••••";
+                aggiornaDisplayPin(index);
             } else {
                 if (currentPins[index].length < 6) {
                     currentPins[index] += val;
-                    display.innerText = "•".repeat(currentPins[index].length);
+                    aggiornaDisplayPin(index);
                 }
             }
         }
@@ -503,6 +534,7 @@
             document.getElementById('devKey').value = '';
             document.getElementById('devId').value = '';
             document.getElementById('devType').value = 'button';
+            document.getElementById('devPin').type = 'password';
             gestisciTipoAccesso();
         }
 
