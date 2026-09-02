@@ -91,7 +91,7 @@
 
         <!-- VISTA AMMINISTRATORE -->
         <div id="adminView" style="display: none;">
-            <div class="card">
+            <div class="card" id="housesCard">
                 <h2>Cartelle Appartamenti</h2>
                 <div id="housesContainer"></div>
             </div>
@@ -463,14 +463,18 @@
 
         function caricaDispositiviAdmin() {
             const container = document.getElementById('housesContainer');
+            const housesCard = document.getElementById('housesCard');
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
 
             popolaMenuCase(dispositivi);
 
             if (dispositivi.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #64748b;">Nessun appartamento presente.</p>';
+                if (housesCard) housesCard.style.display = 'none';
+                container.innerHTML = '';
                 return;
             }
+
+            if (housesCard) housesCard.style.display = 'block';
 
             const caseGroup = {};
             dispositivi.forEach((dev) => {
