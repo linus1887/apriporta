@@ -266,9 +266,24 @@
                 <td><input type="text" class="pin-val" placeholder="PIN" maxlength="6" value="${pin}"></td>
                 <td><input type="date" class="pin-start" value="${startDate}"></td>
                 <td><input type="date" class="pin-end" value="${endDate}"></td>
-                <td><button type="button" class="btn-delete" style="padding: 4px 6px;" onclick="this.closest('tr').remove()">✕</button></td>
+                <td><button type="button" class="btn-delete" style="padding: 4px 6px;" onclick="rimuoviRigaPin(this)">✕</button></td>
             `;
             tbody.appendChild(tr);
+        }
+
+        function rimuoviRigaPin(btn) {
+            const tr = btn.closest('tr');
+            const guestName = tr.querySelector('.pin-guest').value.trim();
+            const pinVal = tr.querySelector('.pin-val').value.trim();
+
+            let messaggio = "Sei sicuro di voler eliminare questo codice PIN?";
+            if (guestName || pinVal) {
+                messaggio = `Sei sicuro di voler eliminare il PIN${guestName ? ' di "' + guestName + '"' : ''}${pinVal ? ' (' + pinVal + ')' : ''}?`;
+            }
+
+            if (confirm(messaggio)) {
+                tr.remove();
+            }
         }
 
         function ottieniListaPinDaTabella() {
