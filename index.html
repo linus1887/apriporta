@@ -74,6 +74,11 @@
         .modal-card { background: #1e293b; padding: 25px; border-radius: 16px; width: 100%; max-width: 500px; border: 1px solid #334155; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
         .modal-card h2 { border: none; margin-bottom: 20px; text-align: center; }
         .login-err { color: #ef4444; font-size: 13px; margin-top: 8px; display: none; text-align: center; }
+
+        /* INPUT PASSWORD CON OCCHIO */
+        .password-input-wrapper { position: relative; width: 100%; }
+        .password-input-wrapper input { padding-right: 40px; }
+        .toggle-password-btn { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 16px; user-select: none; }
     </style>
 </head>
 <body>
@@ -83,7 +88,10 @@
         <div class="modal-card" style="max-width: 360px;">
             <h2>🔒 Accesso Riservato</h2>
             <label for="adminPassword" style="text-align: left;">Inserisci Password Admin <span class="req">*</span></label>
-            <input type="password" id="adminPassword" placeholder="••••••••" onkeyup="if(event.key==='Enter') verificaPassword()">
+            <div class="password-input-wrapper">
+                <input type="password" id="adminPassword" placeholder="••••••••" onkeyup="if(event.key==='Enter') verificaPassword()">
+                <button type="button" class="toggle-password-btn" id="toggleAdminPasswordBtn" onclick="toggleAdminPassword()">👁️</button>
+            </div>
             <button class="btn btn-add" onclick="verificaPassword()">Accedi</button>
             <div id="loginError" class="login-err">Password errata! Riprova.</div>
         </div>
@@ -231,7 +239,7 @@
                     <label>Device ID <span class="req">*</span></label>
                     <input type="text" id="devId" placeholder="Es. 1x1234567xxx">
 
-                    <button class="btn btn-add" id="btnSave" onclick="salvaDispositivo()">+ Inserisci dispositivo</button>
+                    <button class="btn btn-add" id="btnSave" onclick="salvaDispositivo()">+ Salva Dispositivo</button>
                 </div>
             </div>
 
@@ -251,6 +259,18 @@
 
         const currentPins = {};
         const pinVisibility = {};
+
+        function toggleAdminPassword() {
+            const passwordInput = document.getElementById('adminPassword');
+            const toggleBtn = document.getElementById('toggleAdminPasswordBtn');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.innerText = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.innerText = '👁️';
+            }
+        }
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
