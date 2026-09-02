@@ -390,12 +390,14 @@
                 </div>
             ` : '';
 
+            const titleStyle = isGuest ? 'style="text-align: center; width: 100%;"' : '';
+
             if (dev.type === 'pin') {
                 const pinListData = JSON.stringify(dev.pinList || []).replace(/"/g, '&quot;');
                 item.innerHTML = `
                     <div class="device-header">
-                        <span class="device-title">🔢 ${dev.name}</span>
-                        ${actionButtons}  
+                        <span class="device-title" ${titleStyle}>🔢 ${dev.name}</span>
+                        ${actionButtons}
                     </div>
                     <div class="pin-display-wrapper">
                         <div class="pin-display" id="pin-display-${idx}">••••</div>
@@ -412,7 +414,7 @@
                 const btnId = isGuest ? `gbtn-${idx}` : `btn-${idx}`;
                 item.innerHTML = `
                     <div class="device-header">
-                        <span class="device-title">🔘 ${dev.name}</span>
+                        <span class="device-title" ${titleStyle}>🔘 ${dev.name}</span>
                         ${actionButtons}
                     </div>
                     <button class="btn btn-trigger" id="${btnId}" onclick="inviaComando('${dev.url}', '${dev.id}', '${dev.key}', '${btnId}', '${statusId}')">
@@ -547,6 +549,7 @@
             if (val === 'C') {
                 currentPins[index] = "";
                 aggiornaDisplayPin(index);
+                statusDiv.style.color = "#94a3b8";
                 statusDiv.innerText = "Inserisci il PIN per aprire";
             } else if (val === 'OK') {
                 const pinDigitato = currentPins[index];
@@ -570,6 +573,8 @@
                 });
 
                 if (pinValido) {
+                    statusDiv.style.color = "#38bdf8";
+                    statusDiv.innerText = "⏳ PIN corretto! Invio comando...";
                     inviaComando(url, id, key, null, statusId);
                 } else {
                     statusDiv.style.color = "#f87171";
