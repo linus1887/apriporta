@@ -27,17 +27,18 @@
         input, select { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
         input:focus, select:focus { outline: none; border-color: #38bdf8; }
         
-        /* INPUT CON OCCHIO PER PIN */
-        .pin-input-group { position: relative; display: flex; align-items: center; }
-        .pin-input-group input { padding-right: 45px; }
-        .toggle-eye-btn { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; padding: 0; line-height: 1; user-select: none; }
-        .toggle-eye-btn:hover { color: #38bdf8; }
+        /* TABELLA PIN OSPITI */
+        .pin-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 12px; }
+        .pin-table th { text-align: left; background-color: #0f172a; color: #38bdf8; padding: 8px; border: 1px solid #334155; }
+        .pin-table td { padding: 8px; border: 1px solid #334155; background-color: #1e293b; }
+        .pin-table input { margin-bottom: 0; padding: 6px; font-size: 12px; }
 
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; }
         .btn-add { background-color: #10b981; color: white; margin-top: 5px; }
         .btn-edit { background-color: #f59e0b; color: white; border: none; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; }
         .btn-delete { background-color: #ef4444; color: white; border: none; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; }
         .btn-house-share { background-color: #8b5cf6; color: white; border: none; padding: 8px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; width: 100%; }
+        .btn-small-add { background-color: #3b82f6; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-bottom: 12px; }
         
         .device-item { background-color: #0f172a; padding: 16px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; }
         .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -97,11 +98,23 @@
                 </select>
 
                 <div id="pinContainer" style="display: none;">
-                    <label>PIN di Sblocco Porta (Numerico)</label>
-                    <div class="pin-input-group">
-                        <input type="password" id="devPin" placeholder="es. 1234" maxlength="6" inputmode="numeric">
-                        <button type="button" class="toggle-eye-btn" id="formPinEye" onclick="toggleFormPinVisibility()">👁️</button>
-                    </div>
+                    <label>Tabella Gestione PIN Ospiti</label>
+                    <button type="button" class="btn-small-add" onclick="aggiungiRigaPinTable()">+ Aggiungi Ospite</button>
+                    
+                    <table class="pin-table">
+                        <thead>
+                            <tr>
+                                <th>Nome Ospite</th>
+                                <th>PIN</th>
+                                <th>Dal</th>
+                                <th>Al</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="pinTableBody">
+                            <!-- Righe create dinamicamente -->
+                        </tbody>
+                    </table>
                 </div>
 
                 <label>Server URL</label>
@@ -142,6 +155,11 @@
                     modificato = true;
                 } else {
                     houseMap[hName] = dev.houseId;
+                }
+                // Migrazione del vecchio PIN singolo verso il nuovo array pinList
+                if (dev.pin && (!dev.pinList || dev.pinList.length === 0)) {
+                    dev.pinList = [{ guest: "Master", pin: dev.pin, startDate: "", endDate: "" }];
+                    modificato = true;
                 }
             });
 
@@ -204,6 +222,7 @@
             ` : '';
 
             if (dev.type === 'pin') {
+                const pinListData = JSON.stringify(dev.pinList || []).replace(/"/g, '&quot;');
                 item.innerHTML = `
                     <div class="device-header">
                         <span class="device-title">🔑 ${dev.name}</span>
@@ -215,7 +234,7 @@
                     </div>
                     <div class="keypad">
                         ${[1,2,3,4,5,6,7,8,9,'C',0,'OK'].map(val => `
-                            <button class="keypad-btn" onclick="gestisciPinInput('${val}', ${idx}, '${dev.url}', '${dev.id}', '${dev.key}', '${dev.pin}', '${statusId}')">${val}</button>
+                            <button class="keypad-btn" onclick="gestisciPinInput('${val}', ${idx}, '${dev.url}', '${dev.id}', '${dev.key}', ${pinListData}, '${statusId}')">${val}</button>
                         `).join('')}
                     </div>
                     <div class="status-msg" id="${statusId}">Inserisci il PIN per aprire</div>
@@ -236,21 +255,47 @@
             return item;
         }
 
-        // TOGGLE OCCHIO NEL FORM CONFIGURAZIONE
-        function toggleFormPinVisibility() {
-            const pinInput = document.getElementById('devPin');
-            const eyeBtn = document.getElementById('formPinEye');
+        /* GESTIONE TABELLA DINAMICA PIN */
+        function aggiungiRigaPinTable(guest = '', pin = '', startDate = '', endDate = '') {
+            const tbody = document.getElementById('pinTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" class="pin-guest" placeholder="Nome" value="${guest}"></td>
+                <td><input type="text" class="pin-val" placeholder="PIN" maxlength="6" value="${pin}"></td>
+                <td><input type="date" class="pin-start" value="${startDate}"></td>
+                <td><input type="date" class="pin-end" value="${endDate}"></td>
+                <td><button type="button" class="btn-delete" style="padding: 4px 6px;" onclick="this.closest('tr').remove()">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
 
-            if (pinInput.type === 'password') {
-                pinInput.type = 'text';
-                eyeBtn.innerText = '🙈';
+        function ottieniListaPinDaTabella() {
+            const righe = document.querySelectorAll('#pinTableBody tr');
+            const pinList = [];
+            righe.forEach(tr => {
+                const guest = tr.querySelector('.pin-guest').value.trim();
+                const pin = tr.querySelector('.pin-val').value.trim();
+                const startDate = tr.querySelector('.pin-start').value;
+                const endDate = tr.querySelector('.pin-end').value;
+
+                if (pin) {
+                    pinList.push({ guest, pin, startDate, endDate });
+                }
+            });
+            return pinList;
+        }
+
+        function popolaTabellaPin(pinList = []) {
+            const tbody = document.getElementById('pinTableBody');
+            tbody.innerHTML = '';
+            if (pinList.length === 0) {
+                aggiungiRigaPinTable();
             } else {
-                pinInput.type = 'password';
-                eyeBtn.innerText = '👁️';
+                pinList.forEach(p => aggiungiRigaPinTable(p.guest, p.pin, p.startDate, p.endDate));
             }
         }
 
-        // TOGGLE OCCHIO SUL TASTIERINO
+        /* TOGGLE OCCHIO TASTIERINO */
         function toggleKeypadPinVisibility(index) {
             pinVisibility[index] = !pinVisibility[index];
             const eyeBtn = document.getElementById(`keypad-eye-${index}`);
@@ -270,7 +315,8 @@
             }
         }
 
-        function gestisciPinInput(val, index, url, id, key, correctPin, statusId) {
+        /* VERIFICA VALIDITA PIN E DATE */
+        function gestisciPinInput(val, index, url, id, key, pinList, statusId) {
             if (!currentPins[index]) currentPins[index] = "";
             const statusDiv = document.getElementById(statusId);
 
@@ -279,11 +325,30 @@
                 aggiornaDisplayPin(index);
                 statusDiv.innerText = "Inserisci il PIN per aprire";
             } else if (val === 'OK') {
-                if (currentPins[index] === correctPin) {
+                const pinDigitato = currentPins[index];
+                const adesso = new Date();
+                adesso.setHours(0, 0, 0, 0);
+
+                const pinValido = pinList.find(p => {
+                    if (p.pin !== pinDigitato) return false;
+
+                    const inizio = p.startDate ? new Date(p.startDate) : null;
+                    const fine = p.endDate ? new Date(p.endDate) : null;
+
+                    if (inizio) inizio.setHours(0, 0, 0, 0);
+                    if (fine) fine.setHours(23, 59, 59, 999);
+
+                    if (inizio && adesso < inizio) return false;
+                    if (fine && adesso > fine) return false;
+
+                    return true;
+                });
+
+                if (pinValido) {
                     inviaComando(url, id, key, null, statusId);
                 } else {
                     statusDiv.style.color = "#f87171";
-                    statusDiv.innerText = "✖ PIN Errato!";
+                    statusDiv.innerText = "✖ PIN Scaduto o Errato!";
                 }
                 currentPins[index] = "";
                 aggiornaDisplayPin(index);
@@ -418,6 +483,9 @@
             const type = document.getElementById('devType').value;
             const pinContainer = document.getElementById('pinContainer');
             pinContainer.style.display = type === 'pin' ? 'block' : 'none';
+            if (type === 'pin' && document.querySelectorAll('#pinTableBody tr').length === 0) {
+                aggiungiRigaPinTable();
+            }
         }
 
         function copiaLinkCasa(houseId) {
@@ -458,7 +526,7 @@
 
             const name = document.getElementById('devName').value.trim();
             const type = document.getElementById('devType').value;
-            const pin  = document.getElementById('devPin').value.trim();
+            const pinList = type === 'pin' ? ottieniListaPinDaTabella() : [];
             const url  = document.getElementById('devUrl').value.trim().replace(/\/$/, "");
             const key  = document.getElementById('devKey').value.trim();
             const id   = document.getElementById('devId').value.trim();
@@ -468,8 +536,8 @@
                 return;
             }
 
-            if (type === 'pin' && !pin) {
-                alert("Inserisci un PIN per la porta!");
+            if (type === 'pin' && pinList.length === 0) {
+                alert("Inserisci almeno un PIN valido nella tabella!");
                 return;
             }
 
@@ -483,7 +551,7 @@
                         houseId,
                         name, 
                         type, 
-                        pin, 
+                        pinList, 
                         url, 
                         key, 
                         id 
@@ -498,7 +566,7 @@
                 }
             } else {
                 const idInternal = 'dev_' + Date.now();
-                dispositivi.push({ idInternal, houseId, house, address, name, type, pin, url, key, id });
+                dispositivi.push({ idInternal, houseId, house, address, name, type, pinList, url, key, id });
             }
 
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
@@ -524,7 +592,7 @@
             document.getElementById('devType').value = dev.type;
             gestisciTipoAccesso();
 
-            document.getElementById('devPin').value = dev.pin || '';
+            popolaTabellaPin(dev.pinList || []);
             document.getElementById('devUrl').value = dev.url;
             document.getElementById('devKey').value = dev.key;
             document.getElementById('devId').value = dev.id;
@@ -541,13 +609,11 @@
             document.getElementById('devNewHouse').value = '';
             document.getElementById('devHouseAddress').value = '';
             document.getElementById('devName').value = '';
-            document.getElementById('devPin').value = '';
+            popolaTabellaPin([]);
             document.getElementById('devUrl').value = '';
             document.getElementById('devKey').value = '';
             document.getElementById('devId').value = '';
             document.getElementById('devType').value = 'button';
-            document.getElementById('devPin').type = 'password';
-            document.getElementById('formPinEye').innerText = '👁️';
             gestisciTipoAccesso();
         }
 
