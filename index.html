@@ -24,6 +24,8 @@
         
         .card { background-color: #1e293b; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); }
         label { display: block; font-size: 12px; margin-bottom: 4px; color: #94a3b8; text-transform: uppercase; }
+        .req { color: #ef4444; font-weight: bold; } /* Stile per l'asterisco dei campi obbligatori */
+        
         input, select { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
         input:focus, select:focus { outline: none; border-color: #38bdf8; }
         
@@ -71,7 +73,7 @@
     <div id="loginOverlay" class="login-overlay">
         <div class="login-card">
             <h2>🔒 Accesso Riservato</h2>
-            <label for="adminPassword" style="text-align: left;">Inserisci Password Admin</label>
+            <label for="adminPassword" style="text-align: left;">Inserisci Password Admin <span class="req">*</span></label>
             <input type="password" id="adminPassword" placeholder="••••••••" onkeyup="if(event.key==='Enter') verificaPassword()">
             <button class="btn btn-add" onclick="verificaPassword()">Accedi</button>
             <div id="loginError" class="login-err">Password errata! Riprova.</div>
@@ -98,35 +100,35 @@
                 <h2 id="formTitle">Aggiungi Nuovo Dispositivo</h2>
                 <input type="hidden" id="editingDevId" value="">
                 
-                <label>Seleziona Casa / Cartella</label>
+                <label>Seleziona Casa / Cartella <span class="req">*</span></label>
                 <select id="devHouseSelect" onchange="gestisciSelezioneCasa()"></select>
 
                 <div id="newHouseContainer" style="display: none;">
-                    <label>Nome Nuova Casa</label>
+                    <label>Nome Nuova Casa <span class="req">*</span></label>
                     <input type="text" id="devNewHouse" placeholder="es. Appartamento mare, Appartemento città">
                     
                     <label>Indirizzo della Casa</label>
                     <input type="text" id="devHouseAddress" placeholder="es. Via Roma 123, Palermo">
                 </div>
 
-                <label>Nome Pulsante / Comando</label>
+                <label>Nome Pulsante / Comando <span class="req">*</span></label>
                 <input type="text" id="devName" placeholder="es. Portone, Porta di ingresso, Atrio">
 
-                <label>Tipo Accesso</label>
+                <label>Tipo Accesso <span class="req">*</span></label>
                 <select id="devType" onchange="gestisciTipoAccesso()">
                     <option value="button">🏢 Portone palazzo (Tasto Diretto)</option>
                     <option value="pin">🔑 Porta appartamento (Tastierino PIN)</option>
                 </select>
 
                 <div id="pinContainer" style="display: none;">
-                    <label>Tabella Gestione PIN Ospiti</label>
+                    <label>Tabella Gestione PIN Ospiti <span class="req">*</span></label>
                     <button type="button" class="btn-small-add" onclick="aggiungiRigaPinTable()">+ Aggiungi Ospite</button>
                     
                     <table class="pin-table">
                         <thead>
                             <tr>
                                 <th>Nome Ospite</th>
-                                <th>PIN</th>
+                                <th>PIN <span class="req">*</span></th>
                                 <th>Dal</th>
                                 <th>Al</th>
                                 <th></th>
@@ -138,13 +140,13 @@
                     </table>
                 </div>
 
-                <label>Server URL</label>
+                <label>Server URL <span class="req">*</span></label>
                 <input type="text" id="devUrl" placeholder="https://shelly-xxx-eu.shelly.cloud">
 
-                <label>Cloud Key</label>
+                <label>Cloud Key <span class="req">*</span></label>
                 <input type="text" id="devKey" placeholder="La tua Cloud Key">
 
-                <label>Device ID</label>
+                <label>Device ID <span class="req">*</span></label>
                 <input type="text" id="devId" placeholder="Es. 1x1234567xxx">
 
                 <button class="btn btn-add" id="btnSave" onclick="salvaDispositivo()">+ Salva Dispositivo</button>
