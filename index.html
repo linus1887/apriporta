@@ -84,54 +84,39 @@
 
         // =========================================================
 
-        function attivaRelay() {
-            const btn = document.getElementById('mainBtn');
-            const statusDiv = document.getElementById('status');
+function attivaRelay() {
+    const btn = document.getElementById('mainBtn');
+    const statusDiv = document.getElementById('status');
 
-            // Disabilita temporaneamente il pulsante per evitare doppie pressioni
-            btn.disabled = true;
-            statusDiv.style.color = "#38bdf8";
-            statusDiv.innerText = "Invio comando in corso...";
+    btn.disabled = true;
+    statusDiv.style.color = "#38bdf8";
+    statusDiv.innerText = "Invio comando in corso...";
 
-            // Pulizia URL se contiene uno slash finale accidentale
-            const cleanUrl = serverUrl.replace(/\/$/, "");
-            const endpoint = `${cleanUrl}/device/relay/control`;
+    const cleanUrl = serverUrl.replace(/\/$/, "");
+    
+    // Costruiamo l'URL passando i dati in GET (Query Parameters)
+    const requestUrl = `${cleanUrl}/device/relay/control?id=${encodeURIComponent(deviceId)}&auth_key=${encodeURIComponent(authKey)}&channel=0&turn=on`;
 
-            const formData = new URLSearchParams();
-            formData.append('id', deviceId);
-            formData.append('auth_key', authKey);
-            formData.append('channel', '0'); // Canale del relè
-            formData.append('turn', 'on');  // Invia il comando di accensione
-
-            fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.isok) {
-                    statusDiv.style.color = "#4ade80";
-                    statusDiv.innerText = "✔ Comando inviato con successo!";
-                } else {
-                    statusDiv.style.color = "#f87171";
-                    statusDiv.innerText = "✖ Errore: " + JSON.stringify(data.errors);
-                }
-            })
-            .catch(error => {
-                statusDiv.style.color = "#f87171";
-                statusDiv.innerText = "✖ Errore di rete/connessione";
-                console.error(error);
-            })
-            .finally(() => {
-                // Riabilita il pulsante dopo 3 secondi
-                setTimeout(() => {
-                    btn.disabled = false;
-                }, 3000);
-            });
-        }
+    fetch(requestUrl, {
+        method: 'GET',
+        mode: 'no-cors' // Bypassa il blocco CORS del browser
+    })
+    .then(() => {
+        // Con no-cors il browser non permette di leggere la risposta (data.isok),
+        // ma se la richiesta parte senza errori di rete, il comando è stato inviato!
+        statusDiv.style.color = "#4ade80";
+        statusDiv.innerText = "✔ Comando inviato allo Shelly!";
+    })
+    .catch(error => {
+        statusDiv.style.color = "#f87171";
+        statusDiv.innerText = "✖ Errore di rete: " + error.message;
+    })
+    .finally(() => {
+        setTimeout(() => {
+            btn.disabled = false;
+        }, 3000);
+    });
+}
     </script>
 
 </body>
