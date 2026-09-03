@@ -86,7 +86,7 @@
 </head>
 <body>
 
-    <!-- OVERLAY LOGIN (NASCUSTO DI DEFAULT) -->
+    <!-- OVERLAY LOGIN -->
     <div id="loginOverlay" class="modal-overlay" style="display: none;">
         <div class="modal-card" style="max-width: 360px;">
             <h2>🔒 Accesso Riservato</h2>
@@ -395,11 +395,27 @@
             }
         }
 
+        function estraiHouseIdDaUrl() {
+            // Controlla prima nei parametri standard ?houseId=...
+            const urlParams = new URLSearchParams(window.location.search);
+            let houseId = urlParams.get('houseId');
+            if (houseId) return houseId;
+
+            // Se non trovato, controlla se si trova dopo il cancelletto #?houseId=...
+            const hash = window.location.hash;
+            if (hash.includes('houseId=')) {
+                const queryInHash = hash.substring(hash.indexOf('?') + 1);
+                const hashParams = new URLSearchParams(queryInHash);
+                return hashParams.get('houseId');
+            }
+
+            return null;
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             migraDatiEsistenti();
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const houseIdParam = urlParams.get('houseId');
+            const houseIdParam = estraiHouseIdDaUrl();
 
             // SE houseId È PRESENTE NELL'URL -> MODALITÀ OSPITE
             if (houseIdParam) {
