@@ -356,7 +356,6 @@
             document.getElementById('adminPassword').value = '';
             document.getElementById('loginError').style.display = 'none';
             
-            // Chiude eventuali pop-up aperti
             chiudiModalPass();
             chiudiModalDispositivo();
             chiudiModalCasa();
@@ -551,8 +550,8 @@
                 <td><input type="text" class="pin-guest" placeholder="Nome" value="${guest}"></td>
                 <td><input type="text" class="pin-val" placeholder="4 cifre" maxlength="4" pattern="[0-9]*" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" value="${pin}"></td>
                 <td><input type="checkbox" class="pin-perm" ${isPermanent ? 'checked' : ''} onchange="gestisciStatoPermanente(this)"></td>
-                <td><input type="date" class="pin-start" value="${startDate}" ${isPermanent ? 'disabled' : ''}></td>
-                <td><input type="date" class="pin-end" value="${endDate}" ${isPermanent ? 'disabled' : ''}></td>
+                <td><input type="date" class="pin-start" value="${startDate}" ${isPermanent ? 'disabled' : 'required'}></td>
+                <td><input type="date" class="pin-end" value="${endDate}" ${isPermanent ? 'disabled' : 'required'}></td>
                 <td><button type="button" class="btn-delete" style="padding: 6px 8px;" onclick="rimuoviRigaPin(this)">✕</button></td>
             `;
             return tr;
@@ -568,9 +567,13 @@
                 endInput.value = '';
                 startInput.disabled = true;
                 endInput.disabled = true;
+                startInput.required = false;
+                endInput.required = false;
             } else {
                 startInput.disabled = false;
                 endInput.disabled = false;
+                startInput.required = true;
+                endInput.required = true;
             }
         }
 
@@ -592,9 +595,9 @@
         function ottieniListaPinDaTabella(targetTbodyId = 'pinTableBody') {
             const righe = document.querySelectorAll(`#${targetTbodyId} tr`);
             const pinList = [];
-            let error = false;
 
-            righe.forEach(tr => {
+            for (let i = 0; i < righe.length; i++) {
+                const tr = righe[i];
                 const guest = tr.querySelector('.pin-guest').value.trim();
                 const pin = tr.querySelector('.pin-val').value.trim();
                 const isPermanent = tr.querySelector('.pin-perm').checked;
@@ -603,16 +606,23 @@
 
                 if (pin) {
                     if (!/^\d{4}$/.test(pin)) {
-                        error = true;
-                    } else {
-                        pinList.push({ guest, pin, isPermanent, startDate, endDate });
+                        alert("Tutti i PIN inseriti devono essere di 4 cifre numeriche!");
+                        return null;
                     }
-                }
-            });
 
-            if (error) {
-                alert("Tutti i PIN inseriti devono essere di 4 cifre numeriche!");
-                return null;
+                    // VALIDAZIONE OBBLIGATORIETÀ PERMANENTE / DATE
+                    if (!isPermanent && (!startDate || !endDate)) {
+                        alert(`Per il PIN inserito${guest ? ' (' + guest + ')' : ''}, devi spuntare 'Permanente' OPPURE selezionare sia la data di inizio che quella di fine.`);
+                        return null;
+                    }
+
+                    if (!isPermanent && startDate > endDate) {
+                        alert(`Per il PIN inserito${guest ? ' (' + guest + ')' : ''}, la data d'inizio non può essere successiva alla data di fine.`);
+                        return null;
+                    }
+
+                    pinList.push({ guest, pin, isPermanent, startDate, endDate });
+                }
             }
 
             return pinList;
