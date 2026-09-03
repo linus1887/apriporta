@@ -92,7 +92,7 @@
 <body>
 
     <!-- OVERLAY LOGIN -->
-    <div id="loginOverlay" class="modal-overlay">
+    <div id="loginOverlay" class="modal-overlay" style="display: none;">
         <div class="modal-card" style="max-width: 360px;">
             <h2>🔒 Accesso Riservato</h2>
             <label for="adminPassword" style="text-align: left;">Inserisci Password Admin <span class="req">*</span></label>
@@ -356,7 +356,6 @@
             document.getElementById('adminPassword').value = '';
             document.getElementById('loginError').style.display = 'none';
             
-            // Chiude eventuali pop-up aperti
             chiudiModalPass();
             chiudiModalDispositivo();
             chiudiModalCasa();
@@ -444,6 +443,7 @@
             const houseIdParam = urlParams.get('houseId');
 
             if (houseIdParam) {
+                // SE PRESENTE houseId NELL'URL, MOSTRA DIRETTAMENTE LA VISTA OSPITE
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('adminView').style.display = 'none';
                 document.getElementById('guestView').style.display = 'block';
@@ -475,6 +475,7 @@
                     document.getElementById('guestView').innerHTML = '<p style="text-align:center;">Casa non trovata o rimossa.</p>';
                 }
             } else {
+                // SE NON C'È houseId, VERIFICA SE È GIÀ AUTENTICATO O MOSTRA LOGIN
                 if (sessionStorage.getItem('is_admin_authenticated') === 'true') {
                     document.getElementById('loginOverlay').style.display = 'none';
                     document.getElementById('adminView').style.display = 'block';
@@ -853,7 +854,7 @@
                 return;
             }
 
-            const baseUrl = window.location.href.split('?')[0];
+            const baseUrl = window.location.origin + window.location.pathname;
             const fullUrl = `${baseUrl}?houseId=${houseId}`;
 
             navigator.clipboard.writeText(fullUrl).then(() => {
@@ -871,7 +872,6 @@
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
             const nuovoHouseId = 'house_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
         
-            // Aggiorna l'ID della casa per tutti i dispositivi associati
             dispositivi.forEach(dev => {
                 if (dev.houseId === houseId) {
                     dev.houseId = nuovoHouseId;
@@ -880,7 +880,6 @@
         
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
         
-            // Ricostruisce l'URL base in modo pulito
             const baseUrl = window.location.origin + window.location.pathname;
             const nuovoUrl = `${baseUrl}?houseId=${nuovoHouseId}`;
         
@@ -890,7 +889,6 @@
                 prompt("✔ Link rigenerato con successo! Copia manualmente il nuovo link:", nuovoUrl);
             });
         
-            // Ricarica la vista Admin per aggiornare le azioni sui pulsanti
             caricaDispositiviAdmin();
         }
 
