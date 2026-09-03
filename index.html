@@ -511,7 +511,7 @@
                         <button type="button" class="keypad-eye-btn" id="keypad-eye-${idx}" onclick="toggleKeypadPinVisibility(${idx})">👁️</button>
                     </div>
                     <div class="keypad">
-                        ${[1,2,3,4,5,6,7,8,9,'CANCELLA',0,'APRI'].map(val => `
+                        ${[1,2,3,4,5,6,7,8,9,'C',0,'OK'].map(val => `
                             <button class="keypad-btn" onclick="gestisciPinInput('${val}', ${idx}, '${dev.url}', '${dev.id}', '${dev.key}', ${pinListData}, '${statusId}')">${val}</button>
                         `).join('')}
                     </div>
