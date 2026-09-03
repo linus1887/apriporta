@@ -11,14 +11,12 @@
         h1 { text-align: center; color: #f8fafc; font-size: 22px; margin-bottom: 20px; }
         h2 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 0; }
         
-        /* BARRA SUPERIORE ADMIN */
         .admin-header-actions { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; }
         .btn-change-pass { background-color: #475569; color: #f8fafc; border: none; padding: 8px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-change-pass:hover { background-color: #64748b; }
         .btn-logout { background-color: #ef4444; color: #ffffff; border: none; padding: 8px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-logout:hover { background-color: #dc2626; }
 
-        /* STILI NAVIGAZIONE A SCHEDE (TABS) */
         .tab-nav { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #334155; }
         .tab-btn { flex: 1; padding: 12px; background-color: #1e293b; color: #94a3b8; border: none; border-top-left-radius: 8px; border-top-right-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; text-align: center; }
         .tab-btn.active { background-color: #38bdf8; color: #0f172a; }
@@ -43,7 +41,6 @@
         input, select { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
         input:focus, select:focus { outline: none; border-color: #38bdf8; }
         
-        /* TABELLA PIN OSPITI */
         .table-responsive { width: 100%; overflow-x: auto; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; }
         .pin-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 500px; }
         .pin-table th { text-align: center; background-color: #0f172a; color: #38bdf8; padding: 10px; border: 1px solid #334155; }
@@ -77,13 +74,11 @@
         .pin-display { text-align: center; font-size: 24px; letter-spacing: 8px; margin-bottom: 10px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; min-height: 48px; }
         .keypad-eye-btn { position: absolute; right: 12px; top: 12px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; user-select: none; }
 
-        /* MODALE LOGIN & EDIT POPUP */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
         .modal-card { background: #1e293b; padding: 25px; border-radius: 16px; width: 100%; max-width: 500px; border: 1px solid #334155; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
         .modal-card h2 { border: none; margin-bottom: 20px; text-align: center; }
         .login-err { color: #ef4444; font-size: 13px; margin-top: 8px; display: none; text-align: center; }
 
-        /* INPUT PASSWORD CON OCCHIO */
         .password-input-wrapper { position: relative; width: 100%; }
         .password-input-wrapper input { padding-right: 40px; }
         .toggle-password-btn { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 16px; user-select: none; }
@@ -91,7 +86,7 @@
 </head>
 <body>
 
-    <!-- OVERLAY LOGIN -->
+    <!-- OVERLAY LOGIN (NASCUSTO DI DEFAULT) -->
     <div id="loginOverlay" class="modal-overlay" style="display: none;">
         <div class="modal-card" style="max-width: 360px;">
             <h2>🔒 Accesso Riservato</h2>
@@ -112,25 +107,21 @@
     <div id="changePassModal" class="modal-overlay" style="display: none;">
         <div class="modal-card" style="max-width: 400px;">
             <h2>🔑 Cambia Password Admin</h2>
-            
             <label>Password Attuale <span class="req">*</span></label>
             <div class="password-input-wrapper">
                 <input type="password" id="currAdminPass" placeholder="••••••••">
                 <button type="button" class="toggle-password-btn" id="btnToggleCurr" onclick="togglePasswordVisibility('currAdminPass', 'btnToggleCurr')">👁️</button>
             </div>
-
             <label>Nuova Password <span class="req">*</span></label>
             <div class="password-input-wrapper">
                 <input type="password" id="newAdminPass" placeholder="Nuova password">
                 <button type="button" class="toggle-password-btn" id="btnToggleNew" onclick="togglePasswordVisibility('newAdminPass', 'btnToggleNew')">👁️</button>
             </div>
-
             <label>Conferma Nuova Password <span class="req">*</span></label>
             <div class="password-input-wrapper">
                 <input type="password" id="confirmAdminPass" placeholder="Ripeti nuova password">
                 <button type="button" class="toggle-password-btn" id="btnToggleConfirm" onclick="togglePasswordVisibility('confirmAdminPass', 'btnToggleConfirm')">👁️</button>
             </div>
-
             <button class="btn btn-add" onclick="salvaNuovaPasswordAdmin()">Salva Password</button>
             <button class="btn" onclick="chiudiModalPass()" style="background-color: #64748b; margin-top: 8px;">Annulla</button>
         </div>
@@ -141,19 +132,15 @@
         <div class="modal-card">
             <h2>✏️ Modifica Dispositivo</h2>
             <input type="hidden" id="editModalDevId" value="">
-            
             <label>Seleziona Casa / Cartella <span class="req">*</span></label>
             <select id="editModalHouseSelect"></select>
-
             <label>Nome Pulsante / Comando <span class="req">*</span></label>
             <input type="text" id="editModalName" placeholder="es. Portone">
-
             <label>Tipo Accesso <span class="req">*</span></label>
             <select id="editModalType" onchange="gestisciTipoAccessoModal()">
                 <option value="button">🔘 Tasto diretto</option>
                 <option value="pin">🔢 Tastierino numerico (PIN)</option>
             </select>
-
             <div id="editModalPinContainer" style="display: none;">
                 <label>Tabella Gestione PIN Ospiti <span class="req">*</span></label>
                 <button type="button" class="btn-small-add" onclick="aggiungiRigaPinTableModal()">+ Aggiungi PIN ospite</button>
@@ -173,16 +160,12 @@
                     </table>
                 </div>
             </div>
-
             <label>Server URL <span class="req">*</span></label>
             <input type="text" id="editModalUrl" placeholder="https://shelly-xxx-eu.shelly.cloud">
-
             <label>Cloud Key <span class="req">*</span></label>
             <input type="text" id="editModalKey" placeholder="La tua Cloud Key">
-
             <label>Device ID <span class="req">*</span></label>
             <input type="text" id="editModalId" placeholder="Es. 1x1234567xxx">
-
             <button class="btn btn-add" onclick="salvaModificheModal()">Salva Modifiche</button>
             <button class="btn" onclick="chiudiModalDispositivo()" style="background-color: #64748b; margin-top: 8px;">Annulla</button>
         </div>
@@ -193,13 +176,10 @@
         <div class="modal-card" style="max-width: 400px;">
             <h2>✏️ Modifica Casa</h2>
             <input type="hidden" id="editHouseModalId" value="">
-            
             <label>Nome Casa <span class="req">*</span></label>
             <input type="text" id="editHouseModalName">
-
             <label>Indirizzo della casa</label>
             <input type="text" id="editHouseModalAddress">
-
             <button class="btn btn-add" onclick="salvaModificaCasaModal()">Salva Modifiche</button>
             <button class="btn" onclick="chiudiModalCasa()" style="background-color: #64748b; margin-top: 8px;">Annulla</button>
         </div>
@@ -216,47 +196,35 @@
 
         <!-- VISTA AMMINISTRATORE -->
         <div id="adminView" style="display: none;">
-            
             <div class="admin-header-actions">
                 <button class="btn-change-pass" onclick="apriModalPass()">🔑 Cambia Password Admin</button>
                 <button class="btn-logout" onclick="logoutAdmin()">🔒 Esci</button>
             </div>
-
-            <!-- BARRA DI NAVIGAZIONE A SCHEDE -->
             <div class="tab-nav">
                 <button class="tab-btn active" onclick="switchTab('tab-create')">➕ Aggiungi Dispositivo</button>
                 <button class="tab-btn" onclick="switchTab('tab-houses')">🏠 Case e Dispositivi</button>
             </div>
-
-            <!-- SCHEDA 1: CREAZIONE -->
             <div id="tab-create" class="tab-content active">
                 <div class="card" id="formCard">
                     <h2>Aggiungi Nuovo Dispositivo</h2>
-                    
                     <label>Seleziona Casa / Cartella <span class="req">*</span></label>
                     <select id="devHouseSelect" onchange="gestisciSelezioneCasa()"></select>
-
                     <div id="newHouseContainer" style="display: none;">
                         <label>Nome Nuova Casa <span class="req">*</span></label>
                         <input type="text" id="devNewHouse" placeholder="es. Casa mare, Casa città">
-                        
                         <label>Indirizzo della Casa</label>
                         <input type="text" id="devHouseAddress" placeholder="es. Via Roma 123, Palermo">
                     </div>
-
                     <label>Nome Pulsante / Comando <span class="req">*</span></label>
                     <input type="text" id="devName" placeholder="es. Portone, Porta di ingresso, Atrio">
-
                     <label>Tipo Accesso <span class="req">*</span></label>
                     <select id="devType" onchange="gestisciTipoAccesso()">
                         <option value="button">🔘 Tasto diretto</option>
                         <option value="pin">🔢 Tastierino numerico (PIN)</option>
                     </select>
-
                     <div id="pinContainer" style="display: none;">
                         <label>Tabella Gestione PIN Ospiti <span class="req">*</span></label>
                         <button type="button" class="btn-small-add" onclick="aggiungiRigaPinTable()">+ Aggiungi PIN ospite</button>
-                        
                         <div class="table-responsive">
                             <table class="pin-table">
                                 <thead>
@@ -273,28 +241,21 @@
                             </table>
                         </div>
                     </div>
-
                     <label>Server URL <span class="req">*</span></label>
                     <input type="text" id="devUrl" placeholder="https://shelly-xxx-eu.shelly.cloud">
-
                     <label>Cloud Key <span class="req">*</span></label>
                     <input type="text" id="devKey" placeholder="La tua Cloud Key">
-
                     <label>Device ID <span class="req">*</span></label>
                     <input type="text" id="devId" placeholder="Es. 1x1234567xxx">
-
                     <button class="btn btn-add" id="btnSave" onclick="salvaDispositivo()">+ Salva Dispositivo</button>
                 </div>
             </div>
-
-            <!-- SCHEDA 2: ELENCO CASE -->
             <div id="tab-houses" class="tab-content">
                 <div class="card" id="housesCard">
                     <h2>Case Configurate</h2>
                     <div id="housesContainer"></div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -355,7 +316,6 @@
             document.getElementById('loginOverlay').style.display = 'flex';
             document.getElementById('adminPassword').value = '';
             document.getElementById('loginError').style.display = 'none';
-            
             chiudiModalPass();
             chiudiModalDispositivo();
             chiudiModalCasa();
@@ -368,7 +328,6 @@
             }
         }
 
-        /* GESTIONE POPUP MODIFICA PASSWORD ADMIN */
         function apriModalPass() {
             document.getElementById('currAdminPass').value = '';
             document.getElementById('newAdminPass').value = '';
@@ -442,8 +401,8 @@
             const urlParams = new URLSearchParams(window.location.search);
             const houseIdParam = urlParams.get('houseId');
 
+            // SE houseId È PRESENTE NELL'URL -> MODALITÀ OSPITE
             if (houseIdParam) {
-                // SE PRESENTE houseId NELL'URL, MOSTRA DIRETTAMENTE LA VISTA OSPITE
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('adminView').style.display = 'none';
                 document.getElementById('guestView').style.display = 'block';
@@ -472,15 +431,18 @@
                         container.appendChild(generaElementoDispositivo(dev, idx, true));
                     });
                 } else {
-                    document.getElementById('guestView').innerHTML = '<p style="text-align:center;">Casa non trovata o rimossa.</p>';
+                    document.getElementById('guestView').style.display = 'block';
+                    document.getElementById('guestView').innerHTML = '<p style="text-align:center; padding: 20px;">Casa non trovata o rimossa.</p>';
                 }
             } else {
-                // SE NON C'È houseId, VERIFICA SE È GIÀ AUTENTICATO O MOSTRA LOGIN
+                // SE NON C'È houseId NELL'URL -> CHIEDE LOGIN O VISTA ADMIN
                 if (sessionStorage.getItem('is_admin_authenticated') === 'true') {
                     document.getElementById('loginOverlay').style.display = 'none';
                     document.getElementById('adminView').style.display = 'block';
                     caricaDispositiviAdmin();
                 } else {
+                    document.getElementById('adminView').style.display = 'none';
+                    document.getElementById('guestView').style.display = 'none';
                     document.getElementById('loginOverlay').style.display = 'flex';
                 }
             }
@@ -534,13 +496,11 @@
             return item;
         }
 
-        /* TABELLA PIN - VISTA NUOVO DISPOSITIVO */
         function aggiungiRigaPinTable(guest = '', pin = '', isPermanent = false, startDate = '', endDate = '') {
             const tbody = document.getElementById('pinTableBody');
             tbody.appendChild(creaRigaPinElemento(guest, pin, isPermanent, startDate, endDate));
         }
 
-        /* TABELLA PIN - POPUP MODIFICA */
         function aggiungiRigaPinTableModal(guest = '', pin = '', isPermanent = false, startDate = '', endDate = '') {
             const tbody = document.getElementById('editModalPinTableBody');
             tbody.appendChild(creaRigaPinElemento(guest, pin, isPermanent, startDate, endDate));
@@ -892,7 +852,6 @@
             caricaDispositiviAdmin();
         }
 
-        /* POPUP MODIFICA CASA */
         function apriModalCasa(houseId, vecchioNome, vecchioIndirizzo) {
             document.getElementById('editHouseModalId').value = houseId;
             document.getElementById('editHouseModalName').value = vecchioNome;
@@ -927,7 +886,6 @@
             caricaDispositiviAdmin();
         }
 
-        /* POPUP MODIFICA DISPOSITIVO */
         function apriModalDispositivo(idInternal) {
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
             const dev = dispositivi.find(d => d.idInternal === idInternal);
