@@ -867,27 +867,31 @@
             if (!confirm(`Sei sicuro di voler rigenerare il link per "${houseName}"?\n\n⚠️ Il vecchio link inviato agli ospiti smetterà immediatamente di funzionare.`)) {
                 return;
             }
-
+        
             let dispositivi = JSON.parse(localStorage.getItem('shelly_devices')) || [];
             const nuovoHouseId = 'house_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-
+        
+            // Aggiorna l'ID della casa per tutti i dispositivi associati
             dispositivi.forEach(dev => {
                 if (dev.houseId === houseId) {
                     dev.houseId = nuovoHouseId;
                 }
             });
-
+        
             localStorage.setItem('shelly_devices', JSON.stringify(dispositivi));
-            caricaDispositiviAdmin();
-
-            const baseUrl = window.location.href.split('?')[0];
+        
+            // Ricostruisce l'URL base in modo pulito
+            const baseUrl = window.location.origin + window.location.pathname;
             const nuovoUrl = `${baseUrl}?houseId=${nuovoHouseId}`;
-
+        
             navigator.clipboard.writeText(nuovoUrl).then(() => {
                 alert(`✔ Link rigenerato con successo e COPIATO negli appunti!\n\nIl vecchio link non funziona più.\nNuovo Link: ${nuovoUrl}`);
             }).catch(() => {
-                prompt("✔ Link rigenerato con successo! Il vecchio link è disattivato.\nCopia manualmente il nuovo link:", nuovoUrl);
+                prompt("✔ Link rigenerato con successo! Copia manualmente il nuovo link:", nuovoUrl);
             });
+        
+            // Ricarica la vista Admin per aggiornare le azioni sui pulsanti
+            caricaDispositiviAdmin();
         }
 
         /* POPUP MODIFICA CASA */
