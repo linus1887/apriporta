@@ -15,6 +15,8 @@
         .admin-header-actions { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; }
         .btn-change-pass { background-color: #475569; color: #f8fafc; border: none; padding: 8px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-change-pass:hover { background-color: #64748b; }
+        .btn-logout { background-color: #ef4444; color: #ffffff; border: none; padding: 8px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-logout:hover { background-color: #dc2626; }
 
         /* STILI NAVIGAZIONE A SCHEDE (TABS) */
         .tab-nav { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #334155; }
@@ -41,7 +43,7 @@
         input, select { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #fff; font-size: 14px; }
         input:focus, select:focus { outline: none; border-color: #38bdf8; }
         
-        /* TABELLA PIN OSPITI INGRANDITA */
+        /* TABELLA PIN OSPITI */
         .table-responsive { width: 100%; overflow-x: auto; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; }
         .pin-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 500px; }
         .pin-table th { text-align: center; background-color: #0f172a; color: #38bdf8; padding: 10px; border: 1px solid #334155; }
@@ -217,6 +219,7 @@
             
             <div class="admin-header-actions">
                 <button class="btn-change-pass" onclick="apriModalPass()">🔑 Cambia Password Admin</button>
+                <button class="btn-logout" onclick="logoutAdmin()">🔒 Esci</button>
             </div>
 
             <!-- BARRA DI NAVIGAZIONE A SCHEDE -->
@@ -338,10 +341,25 @@
                 sessionStorage.setItem('is_admin_authenticated', 'true');
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('adminView').style.display = 'block';
+                document.getElementById('adminPassword').value = '';
+                errDiv.style.display = 'none';
                 caricaDispositiviAdmin();
             } else {
                 errDiv.style.display = 'block';
             }
+        }
+
+        function logoutAdmin() {
+            sessionStorage.removeItem('is_admin_authenticated');
+            document.getElementById('adminView').style.display = 'none';
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+            
+            // Chiude eventuali pop-up aperti
+            chiudiModalPass();
+            chiudiModalDispositivo();
+            chiudiModalCasa();
         }
 
         function ripristinaPasswordPredefinita() {
